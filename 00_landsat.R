@@ -12,10 +12,9 @@
 #               Housekeeping -----
 ## --------------------------------------------- ##
 
-# Load necessary libraries
-# If you don't have the "librarian" package, uncomment the next line and run it to install the package
-# install.packages("librarian")
-librarian::shelf(sf, appeears, terra)
+# Load necessary packages
+library(sf)
+library(appeears)
 
 # Specify your NASA Earth Data username 
 my_user <- "anchen14"
@@ -64,8 +63,8 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 # needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
 
-my_task <- "surf_reflect_ENP_B01"
-my_layers <- "B01"
+my_task <- "surf_reflect_ENP_B02"
+my_layers <- "B02"
 
 # Create a dataframe for your AppEEARS task
 df <- data.frame(
