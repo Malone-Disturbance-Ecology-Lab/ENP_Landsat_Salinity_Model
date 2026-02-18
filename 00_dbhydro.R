@@ -60,7 +60,7 @@ sort(unique(DBHydro_continuous$STATION))
 # https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=63663,63667,63671,63675,63679,63683&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
 # https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=63687,63691,AL633,63695,63699,63703&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
 # https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=63708,39208,39209,39212,39215,AN690,38066,38067,66106,66107,66112,66113,66125,66126,90464&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
-# https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=38010,38012,38011,66108,66109,66115,66117,66128,66129,38019,38021,38020,38023,38094,66110&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
+# https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=38010,38012,38011,66108,66109,66115,66117,66128,66129,38019,38021,38020,38023,38094,66110,66111,66123,66124,66130,66131&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
 
 ## --------------------------------------------- ##
 #            Download grab data -----
@@ -72,9 +72,10 @@ sort(unique(DBHydro_continuous$STATION))
 # "FLAB05"  "FLAB06"  "FLAB07"  "FLAB08"  "FLAB09"  "FLAB10"  
 # "FLAB11"  "FLAB12"  "FLAB13"  "FLAB14"  "FLAB15"  "FLAB16"  
 # "FLAB17"  "FLAB18"  "FLAB19"  "FLAB20"  "FLAB21"  "FLAB23" 
-
-# trouble downloading these:
 # "FLAB24"  "FLAB25"  "FLAB27"  "FLAB29"  "FLAB30"  "FLAB31"  
 # "FLAB33"  "FLAB34"  "FLAB35"  "FLAB36"  "FLAB37"  "FLAB38"  
 # "FLAB39"  "FLAB40"  "FLAB41"  "FLAB43"  "FLAB44"  "FLAB47"  
 # "FLAB48"  "TTI51"   "TTI51B"  "TTI52"   "TTI55"   "TTI57"   "TTI59"
+
+# Sadly no direct download links
+# Go to https://insightsdata.sfwmd.gov/#/waterquality to download the grab data manually
