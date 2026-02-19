@@ -15,6 +15,9 @@
 library(tidyverse)
 library(sf)
 
+# Create new folder to store shapefile
+dir.create(path = file.path("ENP_DBHydro_sf"), showWarnings = F)
+
 # Point to Margo's Salinity Model folder
 salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Salinity_Model") 
 
@@ -126,4 +129,4 @@ DBHydro_sf <- sf::st_as_sf(DBHydro_points_df, coords = c("longitude", "latitude"
 DBHydro_sf <- DBHydro_sf[sf::st_within(DBHydro_sf, ENP, sparse = FALSE), ]
 
 # Export distinct station points as shapefile
-sf::st_write(DBHydro_sf, file.path("ENP_DBHydro_sf.shp"))
+sf::st_write(DBHydro_sf, file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
