@@ -52,7 +52,7 @@ options(keyring_backend = "file")
 ## --------------------------------------------- ##
 
 # Point to the folder with the ENP shapefile
-shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles") 
+shapefile_folder <- file.path("/", "corellia.environment.yale.edu", "MaloneLab", "Research", "ENP", "shapefiles")
 
 # Read it in
 enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
@@ -64,8 +64,8 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 # Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
 # Create AppEEARS requests as needed
 
-my_task <- "surf_reflect_ENP_B05"
-my_layers <- "B05"
+my_task <- "surf_reflect_ENP_B11"
+my_layers <- "B11"
 
 # Create a dataframe for your AppEEARS task
 df <- data.frame(
