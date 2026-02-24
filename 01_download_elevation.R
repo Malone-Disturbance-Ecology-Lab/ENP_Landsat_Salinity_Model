@@ -1,10 +1,11 @@
 ## --------------------------------------------- ##
-#            Download Elevation Data
+#       Download Elevation and Slope Data
 ## --------------------------------------------- ##
 # Script author(s): Angel Chen
 
 # Purpose:
-## This script downloads elevation data for Everglades National Park using elevatr.
+## This script downloads elevation and slope data for Everglades National Park
+## using elevatr::get_elev_raster() and terra::terrain().
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
@@ -26,10 +27,11 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 template_raster <- terra::rast("HLSL30.020_B01_doy2013111_aid0001_17N.tif")
 
 ## --------------------------------------------- ##
-#                Downloading -----
+#                Get Elevation -----
 ## --------------------------------------------- ##
 
 # Grab elevation data for ENP
+# Set z = 12 in order to get 30 meter resolution later
 ele <- elevatr::get_elev_raster(enp, z = 12) %>%
   # Convert to terra object
   terra::rast()
@@ -44,4 +46,17 @@ ele_resample <- terra::resample(ele, template_raster)
 elevation <- terra::mask(ele_resample, enp)
 
 # Export elevation raster
-writeRaster(elevation, file = "ENP_Elevation.tif")
+terra::writeRaster(elevation, file = "ENP_Elevation.tif")
+
+## --------------------------------------------- ##
+#                  Get Slope -----
+## --------------------------------------------- ##
+
+# Grab slope data for ENP
+slope <- terra::terrain(elevation, "slope")
+
+# Fix name
+names(slope) <- "slope"
+
+# Export slope raster
+terra::writeRaster(slope, file = "ENP_Slope.tif")
