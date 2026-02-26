@@ -112,8 +112,8 @@ DBHydro_df <- dplyr::bind_rows(cont_v2, grab_v1)
 #               Exporting -----
 ## --------------------------------------------- ##
 
-# Export combined cont and grab data
-save(DBHydro_df, file = "ENP_DBHydro_salinity_df.RData")
+# Export combined cont and grab data as CSV
+readr::write_csv(DBHydro_df, "ENP_DBHydro_salinity_df.csv")
 
 DBHydro_points_df <- DBHydro_df %>%
   # Select required columns
@@ -129,4 +129,4 @@ DBHydro_sf <- sf::st_as_sf(DBHydro_points_df, coords = c("longitude", "latitude"
 DBHydro_sf <- DBHydro_sf[sf::st_within(DBHydro_sf, ENP, sparse = FALSE), ]
 
 # Export distinct station points as shapefile
-sf::st_write(DBHydro_sf, file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
+sf::st_write(DBHydro_sf, file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"), append = FALSE)
