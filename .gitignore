@@ -5,3 +5,9 @@
 .DS_Store
 create_shapefile.R
 *.Rproj
+*.csv
+*.RData
+appeears_landsat_data/
+ENP_DBHydro_sf/
+dbhydro_salinity/
+harmonized_appeears_landsat_data/
