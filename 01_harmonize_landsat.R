@@ -40,6 +40,8 @@ fix_extent <- function(band_name){
     }
   }
   
+  message(paste("Number of rasters with differing extents:", length(diff_extent)))
+  
   # Get list of relevant tif files without the ones that have a different extent
   band_files_v1 <- setdiff(band_files_v0, unlist(diff_extent))
   # Read in one good raster to use as a template
@@ -129,5 +131,7 @@ add_dates <- function(band_name, harmonized_band){
 # Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11"
 # Harmonize as needed
 
-B01_fix_extent <- fix_extent(band_name = "B01")
-add_dates(band_name = "B01", harmonized_band = B01_fix_extent)
+my_band <- "B06"
+
+band_fix_extent <- fix_extent(band_name = my_band)
+add_dates(band_name = my_band, harmonized_band = band_fix_extent)
