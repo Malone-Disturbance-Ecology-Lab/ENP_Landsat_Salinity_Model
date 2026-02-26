@@ -18,13 +18,13 @@ library(sf)
 library(climateR)
 
 # Point to the folder with the ENP shapefile
-shapefile_folder <- file.path("/", "corellia.environment.yale.edu", "MaloneLab", "Research", "ENP", "shapefiles")
+shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
 
 # Read it in
 enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 # Read in one raster to use as a template 
-template_raster <- terra::rast("HLSL30.020_B01_doy2013111_aid0001_17N.tif")
+template_raster <- terra::rast(file.path("appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 ## --------------------------------------------- ##
 #                Get Meteorology -----
