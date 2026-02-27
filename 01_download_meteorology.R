@@ -4,8 +4,8 @@
 # Script author(s): Angel Chen
 
 # Purpose:
-## This script downloads meteorology data for Everglades National Park
-## using climateR::getGridMET().
+## This script downloads meteorology data for Everglades National Park using climateR::getGridMET().
+## NOTE: run on Grace cluster for fast computation.
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
@@ -17,14 +17,14 @@ library(terra)
 library(sf)
 library(climateR)
 
-# Point to the folder with the ENP shapefile
-shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
+# Point to the Landsat Salinity folder
+my_folder <- '/home/ac3656/ENP_Landsat_Salinity_Model'
 
-# Read it in
-enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
+# Read in ENP shapefile
+enp <- sf::read_sf(file.path(my_folder, "Everglades_NP_4326", "Everglades_NP_4326.shp"))
 
 # Read in one raster to use as a template 
-template_raster <- terra::rast(file.path("appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
+template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 ## --------------------------------------------- ##
 #                Get Meteorology -----
@@ -32,8 +32,8 @@ template_raster <- terra::rast(file.path("appeears_landsat_data", "B01", "HLSL30
 
 # Grab meteorology data
 climate_rast <-  climateR::getGridMET(enp, c("pr", "tmmn", "tmmx", "srad"),
-                            startDate = "2013-04-01",
-                            endDate = "2026-02-13")
+                                      startDate = "2013-04-01",
+                                      endDate = "2026-02-13")
 
 # Pick out the precip, shortwave radiation, and temp rasters
 precip_r <- climate_rast$precipitation_amount
@@ -42,12 +42,7 @@ tmin_r <- climate_rast$daily_minimum_temperature
 tmax_r <- climate_rast$daily_maximum_temperature
 tavg_r <- mean(tmin_r, tmax_r)
 
-# Resample to the template raster's resolution
-precip <- terra::resample(precip_r, template_raster)
-srad <- terra::resample(srad_r, template_raster)
-tavg <- terra::resample(tavg_r, template_raster)
-
-# Export precip, shortwave radiation, and temp rasters
-terra::writeRaster(precip, "ENP_Precipitation.tif", overwrite = T)
-terra::writeRaster(srad, "ENP_SolarRadiation.tif", overwrite = T)
-terra::writeRaster(tavg, "ENP_AverageTemperature.tif", overwrite = T)
+# Export rasters
+terra::writeRaster(precip_r, file.path(my_folder, "ENP_Precipitation.tif"), overwrite = T)
+terra::writeRaster(srad_r, file.path(my_folder,"ENP_SolarRadiation.tif"), overwrite = T)
+terra::writeRaster(tavg_r, file.path(my_folder,"ENP_AverageTemperature.tif"), overwrite = T)
