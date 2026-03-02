@@ -43,23 +43,25 @@ data_type <- precip_r
 target_folder <- file.path(my_folder, "ENP_Precipitation_Landsat_res")
 target_name <- "ENP_Precipitation_"
 
-# Start with an increase of 0
-increase <- 0
 # For 1 through 47...
 for (i in 1:47){
-  # Starting iteration is i + increase
-  iter_1 <- i + increase
-  # Ending iteration is i * 100
-  iter_2 <- i * 100
   
-  message(iter_1, ",", iter_2)
+  # Set the increase
+  increase <- (i-1) * 99
+  
+  # Starting number is i + increase
+  num_1 <- i + increase
+  # Ending number is i * 100
+  num_2 <- i * 100
+  
+  message(num_1, ",", num_2)
   
   # Subset the data
-  sub <- data_type[[iter_1:iter_2]]
+  sub <- data_type[[num_1:num_2]]
   # Change the resolution to match Landsat
   changed_res <- terra::resample(sub, template_raster)
   # Export
-  terra::writeRaster(changed_res, file.path(target_folder, paste0(target_name, iter_1, "_", iter_2, ".tif")), overwrite = T)
+  terra::writeRaster(changed_res, file.path(target_folder, paste0(target_name, num_1, "_", num_2, ".tif")), overwrite = T)
   
   # If i is 47...
   if(i == 47){
@@ -68,13 +70,10 @@ for (i in 1:47){
     # Change the resolution to match Landsat
     changed_res <- terra::resample(sub, template_raster)
     # Export
-    terra::writeRaster(changed_res, file.path(target_folder, paste0(target_name, iter_1, "_", iter_2, ".tif")), overwrite = T)
+    terra::writeRaster(changed_res, file.path(target_folder, paste0(target_name, num_1, "_", num_2, ".tif")), overwrite = T)
     # Stop for loop
     break()
   }
-  
-  # Otherwise, increase the increase by 99 again
-  increase <- increase + 99
   
 }
 
