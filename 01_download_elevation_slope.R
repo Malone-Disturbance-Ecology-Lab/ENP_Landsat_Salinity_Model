@@ -39,14 +39,14 @@ ele <- elevatr::get_elev_raster(enp, z = 12) %>%
 # Fix name
 names(ele) <- "elevation"
 
-# Resample to the template raster's resolution
-ele_resample <- terra::resample(ele, template_raster)
+# Project and resample to the template raster's CRS and resolution, respectively
+ele_project <- terra::project(ele, template_raster)
 
 # Mask elevation to just the ENP boundary
-elevation <- terra::mask(ele_resample, enp)
+elevation <- terra::mask(ele_project, enp)
 
 # Export elevation raster
-terra::writeRaster(elevation, file = "ENP_Elevation.tif")
+terra::writeRaster(elevation, file = "ENP_Elevation.tif", overwrite = T)
 
 ## --------------------------------------------- ##
 #                  Get Slope -----
@@ -59,4 +59,4 @@ slope <- terra::terrain(elevation, "slope")
 names(slope) <- "slope"
 
 # Export slope raster
-terra::writeRaster(slope, file = "ENP_Slope.tif")
+terra::writeRaster(slope, file = "ENP_Slope.tif", overwrite = T)
