@@ -125,7 +125,7 @@ DBHydro_points_df <- DBHydro_df %>%
 readr::write_csv(DBHydro_points_df, "DBHydro_lonlat.csv")
 
 # Convert distinct station points to shapefile
-DBHydro_sf <- sf::st_as_sf(DBHydro_points_df, coords = c("longitude", "latitude"), crs = 4326)
+DBHydro_sf <- sf::st_as_sf(DBHydro_points_df, coords = c("longitude", "latitude"), crs = sf::st_crs(ENP))
 DBHydro_sf <- DBHydro_sf[sf::st_within(DBHydro_sf, ENP, sparse = FALSE), ]
 
 # Export distinct station points as shapefile
