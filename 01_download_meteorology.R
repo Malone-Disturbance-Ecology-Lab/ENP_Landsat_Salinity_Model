@@ -43,7 +43,17 @@ tmin_r <- climate_rast$daily_minimum_temperature
 tmax_r <- climate_rast$daily_maximum_temperature
 tavg_r <- mean(tmin_r, tmax_r)
 
+precip_r_v2 <- precip_r %>%
+  terra::project(terra::crs(template_raster))
+
+srad_r_v2 <- srad_r %>%
+  terra::project(terra::crs(template_raster))
+
+tavg_r_v2 <- tavg_r %>%
+  terra::project(terra::crs(template_raster))
+
 # Export rasters
-terra::writeRaster(precip_r, file.path(my_folder, "ENP_Precipitation.tif"), overwrite = T)
-terra::writeRaster(srad_r, file.path(my_folder,"ENP_SolarRadiation.tif"), overwrite = T)
-terra::writeRaster(tavg_r, file.path(my_folder,"ENP_AverageTemperature.tif"), overwrite = T)
+terra::writeRaster(precip_r_v2, file.path(my_folder, "ENP_Precipitation.tif"), overwrite = T)
+terra::writeRaster(srad_r_v2, file.path(my_folder,"ENP_SolarRadiation.tif"), overwrite = T)
+terra::writeRaster(tavg_r_v2, file.path(my_folder,"ENP_AverageTemperature.tif"), overwrite = T)
+
