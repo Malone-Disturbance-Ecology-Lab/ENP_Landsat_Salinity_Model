@@ -27,12 +27,16 @@ enp <- sf::read_sf(file.path(my_folder, "Everglades_NP_4326", "Everglades_NP_432
 # Read in one raster to use as a template 
 template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
+# Make the CRS of the ENP boundary shapefile the same as the template raster just in case
+enp_v2 <- enp %>%
+  sf::st_transform(sf::st_crs(template_raster))
+
 ## --------------------------------------------- ##
 #                Get Meteorology -----
 ## --------------------------------------------- ##
 
 # Grab meteorology data
-climate_rast <-  climateR::getGridMET(enp, c("pr", "tmmn", "tmmx", "srad"),
+climate_rast <-  climateR::getGridMET(enp_v2, c("pr", "tmmn", "tmmx", "srad"),
                                       startDate = "2013-04-01",
                                       endDate = "2026-02-13")
 
