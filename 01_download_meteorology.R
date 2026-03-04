@@ -21,6 +21,7 @@ library(climateR)
 my_folder <- '/home/ac3656/ENP_Landsat_Salinity_Model'
 
 # Read in ENP shapefile
+# Can also be found on file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles", "Everglades_NP_4326.shp")
 enp <- sf::read_sf(file.path(my_folder, "Everglades_NP_4326", "Everglades_NP_4326.shp"))
 
 # Read in one raster to use as a template 

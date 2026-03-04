@@ -5,6 +5,7 @@
 
 # Purpose:
 ## This script calculates distance to the coast.
+## NOTE: run on Grace cluster for fast computation.
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
@@ -15,20 +16,19 @@ library(tidyverse)
 library(terra)
 library(sf)
 
-# Point to Margo's Salinity Model folder
-salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Salinity_Model") 
-
-# Point to the folder with the ENP shapefile
-shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
+# Point to the Landsat Salinity folder
+my_folder <- '/home/ac3656/ENP_Landsat_Salinity_Model'
 
 # Read in FL coastline shapefile
-FL_coastline <- sf::st_read(file.path(salinity_folder, "florida_shoreline", "Florida_Shoreline_(1_to_12%2C000_Scale).shp"))
+# Can also be found on file.path("/", "Volumes", "malonelab", "Research", "ENP_Salinity_Model", "florida_shoreline", "Florida_Shoreline_(1_to_12%2C000_Scale).shp") 
+FL_coastline <- sf::st_read(file.path(my_folder, "florida_shoreline", "Florida_Shoreline_(1_to_12%2C000_Scale).shp"))
 
-# Read it ENP shapefile
-enp <- sf::st_read(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
+# Read in ENP shapefile
+# Can also be found on file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles", "Everglades_NP_4326.shp")
+enp <- sf::st_read(file.path(my_folder, "Everglades_NP_4326", "Everglades_NP_4326.shp"))
 
 # Read in one raster to use as a template 
-template_raster <- terra::rast(file.path("appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
+template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 ## --------------------------------------------- ##
 #               Calculating -----
@@ -42,16 +42,28 @@ ENP_coastline <- sf::st_transform(FL_coastline, crs = sf::st_crs(enp)) %>%
 # ggplot() +
 #   geom_sf(data = ENP_coastline)
 
+# Convert to a linestring geometry
 ENP_coastline_line <- sf::st_cast(ENP_coastline, "LINESTRING") %>% 
-  #as("Spatial") %>% 
+  # Convert to terra object
   terra::vect()
 
 # terra::plot(ENP_coastline_line)
 
-coastline <- terra::rasterize(ENP_coastline_line, template_raster, field = 1, touches = T) # make all fields with line string = 1
-# coastline %>% terra::plot()
+# Make all fields with linestring = 1 
+coastline <- terra::rasterize(ENP_coastline_line, template_raster, field = 1, touches = T) 
 
-# Calculate Distance to the coast:
-distance.Coast <- terra::distance(coastline, unit="m", method="geo") # calculate distance of all other fields from 1 values
-plot(distance.Coast)
+# terra::plot(coastline)
+
+# Calculate distance to the coast
+distance.Coast <- terra::distance(coastline, unit="m") # calculate distance of all other fields from 1 values
+
+# terra::plot(distance.Coast)
+
+# Fix name
 names(distance.Coast) <- "distCoast"
+
+# Mask to ENP boundary
+distance.Coast.ENP <- terra::mask(distance.Coast, enp)
+
+# Export
+terra::writeRaster(distance.Coast.ENP, file.path(my_folder, "ENP_DistCoast.tif"), overwrite = T)
