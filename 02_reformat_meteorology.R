@@ -33,21 +33,21 @@ dir.create(path = file.path(my_project, "ENP_AverageTemperature_Landsat_res"), s
 template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 # Read in rasters
-precip_r <- terra::rast(file.path(my_folder, "ENP_Precipitation.tif"))
+#precip_r <- terra::rast(file.path(my_folder, "ENP_Precipitation.tif"))
 #srad_r <- terra::rast(file.path(my_folder, "ENP_SolarRadiation.tif"))
-#tavg_r <- terra::rast(file.path(my_folder, "ENP_AverageTemperature.tif"))
+tavg_r <- terra::rast(file.path(my_folder, "ENP_AverageTemperature.tif"))
 
 ## --------------------------------------------- ##
 #             Change Resolution -----
 ## --------------------------------------------- ##
 
 # Change resolution for precip, solar radiation, average temp as needed
-data_type <- precip_r
-target_folder <- file.path(my_project, "ENP_Precipitation_Landsat_res")
-target_name <- "ENP_Precipitation_"
+data_type <- tavg_r
+target_folder <- file.path(my_project, "ENP_AverageTemperature_Landsat_res")
+target_name <- "ENP_AverageTemperature_"
 
-# For 1 through 47...
-for (i in 1:47){
+# For 1 through 48...
+for (i in 1:48){
   
   # If i is 48...
   if(i == 48){
