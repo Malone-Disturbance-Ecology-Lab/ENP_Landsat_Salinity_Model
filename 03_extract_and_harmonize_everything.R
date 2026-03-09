@@ -26,6 +26,12 @@ B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B0
 B02 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B02.tif"))
 B03 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B03.tif"))
 B04 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B04.tif"))
+B05 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B05.tif"))
+B06 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B06.tif"))
+B07 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B07.tif"))
+B08 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B09.tif"))
+B10 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B10.tif"))
+B11 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B11.tif"))
 
 # Point to precip, solar radiation, temp files
 precip_files <- dir(file.path(landsat_salinity_folder, "ENP_Precipitation_Landsat_res"), pattern = ".tif", full.names = T)
@@ -89,24 +95,26 @@ extract_from_raster <- function(raster, point_shapefile, new_column_name){
 #                 Extraction: Landsat -----
 ## --------------------------------------------------------- ##
 
-# Extract the Landsat data for the points
-B01_points <- extract_from_raster(raster = B01, 
-                                  point_shapefile = terra::vect(DBHydro_sf_v2), 
-                                  new_column_name = "B01")
+# List our current bands together
+landsat_bands_list <- list(B01, B02, B03, B04, B05,
+                           B06, B07, B09, B10, B11)
+# List their names
+landsat_names_list <- list("B01", "B02", "B03", "B04", "B05",
+                           "B06", "B07", "B09", "B10", "B11")
 
-B02_points <- extract_from_raster(raster = B02, 
-                                  point_shapefile = terra::vect(DBHydro_sf_v2), 
-                                  new_column_name = "B02")
+# Create an empty list to store our extracted points
+landsat_points_list <- list()
 
-B03_points <- extract_from_raster(raster = B03, 
-                                  point_shapefile = terra::vect(DBHydro_sf_v2), 
-                                  new_column_name = "B03")
-
-B04_points <- extract_from_raster(raster = B04, 
-                                  point_shapefile = terra::vect(DBHydro_sf_v2), 
-                                  new_column_name = "B04")
-
-landsat_points_list <- list(B01_points, B02_points, B03_points, B04_points)
+# For every band...
+for (i in seq_along(landsat_bands_list)){
+  # Extract the Landsat data for the points
+  band_points <- extract_from_raster(raster = landsat_bands_list[[i]],
+                                     point_shapefile = terra::vect(DBHydro_sf_v2),
+                                     new_column_name = landsat_names_list[[i]])
+  
+  # Save to list
+  landsat_points_list[[i]] <- band_points
+}
 
 landsat_points <- landsat_points_list %>%
   # Join all extracted Landsat points by ID, station, date columns
@@ -180,6 +188,17 @@ for (i in 1:length(temp_files)){
 temp_points <- temp_points_list %>%
   purrr::map_dfr(.f = select, everything())
 
+# Combining all meteorology data ------------------------------
+
+# List our extracted meteorology data
+met_points_list <- list(precip_points, solar_rad_points, temp_points)
+
+met_points <- met_points_list %>%
+  # Join all extracted meteorology points by ID, station, date columns
+  purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
+  # Create a YearWeek column
+  dplyr::mutate(YearWeek = tsibble::yearweek(date))
+  
 ## --------------------------------------------------------- ##
 #    Extraction: Elevation, Slope, Distance to Coast -----
 ## --------------------------------------------------------- ##
@@ -196,10 +215,30 @@ ele_slope_dist_points <- terra::extract(ele_slope_dist_stack, terra::vect(DBHydr
 #                       Harmonizing -----
 ## --------------------------------------------------------- ##
 
-DBHydro_sal_df <- DBHydro_df %>% dplyr::select("station", "collectDate", "value", "grab") %>%
+met_landsat_ele_slope_dist <- met_points %>%
+  # Left join extracted met and Landsat points
+  dplyr::left_join(landsat_points, by = c("ID", "station", "YearWeek")) %>%
+  # Drop YearWeek column
+  dplyr::select(-YearWeek) %>%
+  # Left join extracted met+Landsat points with elevation+slope+distance
+  dplyr::left_join(ele_slope_dist_points, by = c("ID", "station"))
+
+# Create a formatted day column
+met_landsat_ele_slope_dist$day <- as.Date(met_landsat_ele_slope_dist$date)
+
+
+DBHydro_sal_df <- DBHydro_df %>% 
+  # Grab only relevant columns
+  dplyr::select("station", "collectDate", "value", "grab") %>%
+  # Rename value column to "salinity"
   dplyr::rename(salinity = value)
 
+# Create a formatted day column
 DBHydro_sal_df$day <- as.Date(DBHydro_sal_df$collectDate)
 
+# Finally left join salinity with extracted met, Landsat, elevation, slope, distance points
+DBSAL <- dplyr::left_join(DBHydro_sal_df, met_landsat_ele_slope_dist, by = c("station", "day"))
 
+# Export all salinity + extracted data as CSV
+readr::write_csv(DBSAL, "DBSAL.csv")
 
