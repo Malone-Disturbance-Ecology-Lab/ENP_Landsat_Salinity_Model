@@ -51,9 +51,12 @@ fix_extent <- function(band_name){
   
   # Note the scale factor for different bands
   # Bands 10 and 11 have a scale factor of 0.01
+  # Fmask has a scale factor of 1
   # All other bands have a scale factor of 0.0001
   if (band_name == "B10" | band_name == "B11"){
     scale_factor <- 0.01 
+  } else if (band_name == "Fmask"){
+    scale_factor <- 1
   } else {
     scale_factor <- 0.0001
   }
@@ -67,7 +70,11 @@ fix_extent <- function(band_name){
     # Fix extent 
     # resample() will automatically divide by the scaling factor, so 
     # multiply by the scaling factor to undo this
-    fixed_raster <- terra::resample(wrong_extent, template) * scale_factor
+    if (band_name == "Fmask"){
+      fixed_raster <- terra::resample(wrong_extent, template, method = "near") * scale_factor
+    } else {
+      fixed_raster <- terra::resample(wrong_extent, template) * scale_factor
+    }
     # Add to list
     fixed_rasters_list[[i]] <- fixed_raster
   }
@@ -137,10 +144,10 @@ add_dates <- function(band_name, harmonized_band){
 #               Harmonizing -----
 ## --------------------------------------------- ##
 
-# Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11"
+# Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
 # Harmonize as needed
 
-my_band <- "B11"
+my_band <- "Fmask"
 
 band_fix_extent <- fix_extent(band_name = my_band)
 add_dates(band_name = my_band, harmonized_band = band_fix_extent)
