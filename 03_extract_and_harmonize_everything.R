@@ -32,6 +32,7 @@ B07 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B0
 B09 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B09.tif"))
 B10 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B10.tif"))
 B11 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B11.tif"))
+Fmask <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_Fmask.tif"))
 
 # Point to precip, solar radiation, temp files
 precip_files <- dir(file.path(landsat_salinity_folder, "ENP_Precipitation_Landsat_res"), pattern = ".tif", full.names = T)
@@ -97,10 +98,12 @@ extract_from_raster <- function(raster, point_shapefile, new_column_name){
 
 # List our current bands together
 landsat_bands_list <- list(B01, B02, B03, B04, B05,
-                           B06, B07, B09, B10, B11)
+                           B06, B07, B09, B10, B11,
+                           Fmask)
 # List their names
 landsat_names_list <- list("B01", "B02", "B03", "B04", "B05",
-                           "B06", "B07", "B09", "B10", "B11")
+                           "B06", "B07", "B09", "B10", "B11",
+                           "Fmask")
 
 # Create an empty list to store our extracted points
 landsat_points_list <- list()
@@ -119,10 +122,9 @@ for (i in seq_along(landsat_bands_list)){
 landsat_points <- landsat_points_list %>%
   # Join all extracted Landsat points by ID, station, date columns
   purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
-  # Create a YearWeek column
-  dplyr::mutate(YearWeek = tsibble::yearweek(date)) %>% 
-  # Drop the old date column
-  dplyr::select(-date)
+  # Drop the rows where all the bands have NA values
+  # These empty rows come from Landsat rasters that only cover a small portion of ENP on that day
+  dplyr::filter(!dplyr::if_all(starts_with("B"), is.na)) 
 
 ## --------------------------------------------------------- ##
 #       Extraction: Precip, Solar Radiation, Temp -----
@@ -196,8 +198,8 @@ met_points_list <- list(precip_points, solar_rad_points, temp_points)
 met_points <- met_points_list %>%
   # Join all extracted meteorology points by ID, station, date columns
   purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
-  # Create a YearWeek column
-  dplyr::mutate(YearWeek = tsibble::yearweek(date))
+  # Order rows by date
+  dplyr::arrange(date) 
   
 ## --------------------------------------------------------- ##
 #    Extraction: Elevation, Slope, Distance to Coast -----
@@ -217,15 +219,25 @@ ele_slope_dist_points <- terra::extract(ele_slope_dist_stack, terra::vect(DBHydr
 
 met_landsat_ele_slope_dist <- met_points %>%
   # Left join extracted met and Landsat points
-  dplyr::left_join(landsat_points, by = c("ID", "station", "YearWeek")) %>%
-  # Drop YearWeek column
-  dplyr::select(-YearWeek) %>%
+  dplyr::left_join(landsat_points, by = c("ID", "station", "date")) %>%
+  # Group by ID, station
+  dplyr::group_by(ID, station) %>%
+  # Fill in missing band values with value from nearest previous day
+  # For example, if a station has a missing value on 5/26, the value from 5/25 (or earlier) will fill in
+  tidyr::fill(starts_with("B"), .direction = "down") %>%
+  # Fill in missing Fmask values with value from nearest previous day
+  tidyr::fill(Fmask, .direction = "down") %>%
   # Left join extracted met+Landsat points with elevation+slope+distance
-  dplyr::left_join(ele_slope_dist_points, by = c("ID", "station"))
+  dplyr::left_join(ele_slope_dist_points, by = c("ID", "station")) %>%
+  # Order by date and station
+  dplyr::arrange(date, station)
 
-# Create a formatted day column
-met_landsat_ele_slope_dist$day <- as.Date(met_landsat_ele_slope_dist$date)
+# Create a formatted date column
+met_landsat_ele_slope_dist$formatted_date <- as.Date(met_landsat_ele_slope_dist$date)
 
+met_landsat_ele_slope_dist <- met_landsat_ele_slope_dist %>%
+  # Drop old date column
+  dplyr::select(-date)
 
 DBHydro_sal_df <- DBHydro_df %>% 
   # Grab only relevant columns
@@ -233,11 +245,19 @@ DBHydro_sal_df <- DBHydro_df %>%
   # Rename value column to "salinity"
   dplyr::rename(salinity = value)
 
-# Create a formatted day column
-DBHydro_sal_df$day <- as.Date(DBHydro_sal_df$collectDate)
+# Create a formatted date column
+DBHydro_sal_df$formatted_date <- as.Date(DBHydro_sal_df$collectDate)
+
+DBHydro_sal_df <- DBHydro_sal_df %>%
+  # Drop old date column
+  dplyr::select(-collectDate)
 
 # Finally left join salinity with extracted met, Landsat, elevation, slope, distance points
-DBSAL <- dplyr::left_join(DBHydro_sal_df, met_landsat_ele_slope_dist, by = c("station", "day"))
+DBSAL <- dplyr::left_join(DBHydro_sal_df, met_landsat_ele_slope_dist, by = c("station", "formatted_date")) %>%
+  dplyr::relocate(ID, .before = station) %>%
+  dplyr::relocate(formatted_date, .after = station) %>%
+  # Order by formatted_date and station
+  dplyr::arrange(formatted_date, station)
 
 # Export all salinity + extracted data as CSV
 readr::write_csv(DBSAL, "DBSAL.csv")
