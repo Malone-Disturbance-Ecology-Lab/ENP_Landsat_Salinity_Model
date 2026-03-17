@@ -88,6 +88,9 @@ grab_v1 <- grab_combined %>%
   # Select required columns
   dplyr::select("station", "latitude", "longitude", "collectDate", "value", "grab")
 
+# Convert to date format (this gets rid of the minute measurements)
+grab_v1$collectDate <- as.Date(grab_v1$collectDate)
+
 cont_v1 <- cont_combined %>%
   # Select and rename station, collectDate, value columns
   dplyr::select(STATION, TIMESTAMP, VALUE) %>%
@@ -106,7 +109,7 @@ cont_v2 <- cont_v1 %>%
   dplyr::select("station", "latitude", "longitude", "collectDate", "value", "grab")
 
 # Finally combine cont and grab data
-DBHydro_df <- dplyr::bind_rows(cont_v2, grab_v1)
+DBHydro_df <- dplyr::bind_rows(cont_v2, grab_v1) 
 
 ## --------------------------------------------- ##
 #               Exporting -----
