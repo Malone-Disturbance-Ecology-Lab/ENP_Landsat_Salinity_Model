@@ -124,7 +124,23 @@ landsat_points <- landsat_points_list %>%
   purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
   # Drop the rows where all the bands have NA values
   # These empty rows come from Landsat rasters that only cover a small portion of ENP on that day
-  dplyr::filter(!dplyr::if_all(starts_with("B"), is.na)) 
+  dplyr::filter(!dplyr::if_all(starts_with("B"), is.na)) %>% 
+  # Apply the Landsat scale factors to convert to original values
+  dplyr::mutate(dplyr::across(.cols = B01:B09, .fns = ~.x * 0.0001)) %>%
+  dplyr::mutate(dplyr::across(.cols = B10:B11, .fns = ~.x * 0.01)) %>%
+  # Calculate indices
+  dplyr::mutate(NDVI = (B05 - B04) / (B05 + B04),
+                SI = (B03*B04)^0.5,
+                NLI = (B05^2 - B04)/(B05^2 + B04),
+                SRSI = ((NDVI - 1)^2 + SI^2)^0.5,
+                S7 = (B06 - B07)/(B06 + B07),
+                CRSI = ((B05*B04-B03*B02)/((B05*B04+B03*B02)))^0.5,
+                NDSI = (B05 - B06) / (B05 + B06)) %>%
+  # Rename date column to landsat_date
+  dplyr::rename(landsat_date = date)
+
+# Create a formatted date column
+landsat_points$formatted_date <- as.Date(landsat_points$landsat_date)
 
 ## --------------------------------------------------------- ##
 #       Extraction: Precip, Solar Radiation, Temp -----
@@ -200,6 +216,13 @@ met_points <- met_points_list %>%
   purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
   # Order rows by date
   dplyr::arrange(date) 
+
+# Create a formatted date column
+met_points$formatted_date <- as.Date(met_points$date)
+
+met_points <- met_points %>%
+  # Drop old date column
+  dplyr::select(-date)
   
 ## --------------------------------------------------------- ##
 #    Extraction: Elevation, Slope, Distance to Coast -----
@@ -217,28 +240,6 @@ ele_slope_dist_points <- terra::extract(ele_slope_dist_stack, terra::vect(DBHydr
 #                       Harmonizing -----
 ## --------------------------------------------------------- ##
 
-met_landsat_ele_slope_dist <- met_points %>%
-  # Left join extracted met and Landsat points
-  dplyr::left_join(landsat_points, by = c("ID", "station", "date")) %>%
-  # Group by ID, station
-  dplyr::group_by(ID, station) %>%
-  # Fill in missing band values with value from nearest previous day
-  # For example, if a station has a missing value on 5/26, the value from 5/25 (or earlier) will fill in
-  tidyr::fill(starts_with("B"), .direction = "down") %>%
-  # Fill in missing Fmask values with value from nearest previous day
-  tidyr::fill(Fmask, .direction = "down") %>%
-  # Left join extracted met+Landsat points with elevation+slope+distance
-  dplyr::left_join(ele_slope_dist_points, by = c("ID", "station")) %>%
-  # Order by date and station
-  dplyr::arrange(date, station)
-
-# Create a formatted date column
-met_landsat_ele_slope_dist$formatted_date <- as.Date(met_landsat_ele_slope_dist$date)
-
-met_landsat_ele_slope_dist <- met_landsat_ele_slope_dist %>%
-  # Drop old date column
-  dplyr::select(-date)
-
 DBHydro_sal_df <- DBHydro_df %>% 
   # Grab only relevant columns
   dplyr::select("station", "collectDate", "value", "grab") %>%
@@ -252,11 +253,33 @@ DBHydro_sal_df <- DBHydro_sal_df %>%
   # Drop old date column
   dplyr::select(-collectDate)
 
-# Finally left join salinity with extracted met, Landsat, elevation, slope, distance points
-DBSAL <- dplyr::left_join(DBHydro_sal_df, met_landsat_ele_slope_dist, by = c("station", "formatted_date")) %>%
-  dplyr::relocate(ID, .before = station) %>%
+sal_met_ele_slope_dist <- DBHydro_sal_df %>%
+  # Left join salinity with extracted met points
+  dplyr::left_join(met_points, by = c("station", "formatted_date")) %>%
+  # Left join salinity+met points with elevation+slope+distance
+  dplyr::left_join(ele_slope_dist_points, by = c("ID", "station")) 
+
+# Finally full join salinity+met+elevation+slope+distance with extracted Landsat points
+DBSAL <- dplyr::full_join(sal_met_ele_slope_dist, landsat_points, by = c("ID", "station", "formatted_date")) %>%
+  # Drop redundant ID column
+  dplyr::select(-ID) %>%
+  # Reorder columns
   dplyr::relocate(formatted_date, .after = station) %>%
-  # Order by formatted_date and station
+  dplyr::relocate(landsat_date, .after = formatted_date) %>%
+  dplyr::relocate(grab, .after = landsat_date) %>%
+  # Create a flag column for rows with salinity measurements
+  dplyr::mutate(has_salinity = dplyr::case_when(
+    !is.na(salinity) ~ 1,
+    T ~ 0
+  ), .after = formatted_date) %>%
+  # Create a flag column for rows with Landsat measurements
+  dplyr::mutate(has_landsat = dplyr::case_when(
+    !is.na(landsat_date) ~ 1,
+    T ~ 0
+  ), .after = has_salinity) %>%
+  # Drop landsat_date column
+  dplyr::select(-landsat_date) %>%
+  # Order by salinity_date and station
   dplyr::arrange(formatted_date, station)
 
 # Export all salinity + extracted data as CSV
