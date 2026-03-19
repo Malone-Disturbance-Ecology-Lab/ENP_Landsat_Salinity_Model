@@ -52,7 +52,7 @@ options(keyring_backend = "file")
 ## --------------------------------------------- ##
 
 # Point to the folder with the ENP shapefile
-shapefile_folder <- file.path("/", "corellia.environment.yale.edu", "MaloneLab", "Research", "ENP", "shapefiles")
+shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
 
 # Read it in
 enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
@@ -61,19 +61,20 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 #           Create AppEEARS task -----
 ## --------------------------------------------- ##
 
-# Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
+# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
+# Needed layers S30: "B01", "B02", "B03", "B04"
 # Create AppEEARS requests as needed
 
-my_task <- "surf_reflect_ENP_B11"
-my_layers <- "B11"
+my_task <- "surf_reflect_S30_ENP_B02"
+my_layers <- "B02"
 
 # Create a dataframe for your AppEEARS task
 df <- data.frame(
   task = my_task, # name of task
   subtask = "subtask", # name of subtask 
-  start = "2013-04-01", # start date for data
+  start = "2015-12-01", # start date for data
   end = "2026-02-13", # end date for data
-  product = "HLSL30.020", # data product ID
+  product = "HLSS30.020", # data product ID
   layer = my_layers # name of specific band(s)
 )
 
