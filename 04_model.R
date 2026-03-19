@@ -35,7 +35,7 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
 DBSAL_v2 <- DBSAL %>%
   # Filter out high aerosol & cloudy days
   dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) %>%
-  # Getting only the cont salinity values increased r^2 from 71-72% to 77% ?
+  # Getting only the cont salinity values increased r^2 from .71-.72 to .77 ?
   dplyr::filter(grab == 0)
   
 
@@ -74,7 +74,8 @@ my_pred2 <- predict(rf_model2, newdata = test_all_years)
 mse2 <- mean((my_pred2 - test_all_years$salinity)^2)
 r_squared2 <- 1 - sum((test_all_years$salinity - my_pred2)^2) / sum((test_all_years$salinity - mean(test_all_years$salinity))^2)
 
-rf_model3 <- randomForest(salinity ~  srad + tavg + elevation + slope + distCoast + SI + NDSI + NLI,
+rf_model3 <- randomForest(salinity ~  precip + srad + tavg + elevation + slope + distCoast +
+                            B01 + B02 + B03 + B04 + B05 + B06 + B07 + B09 + B10 + B11,
                           data = train_all_years,
                           importance = TRUE)
 
@@ -84,7 +85,7 @@ my_pred3 <- predict(rf_model3, newdata = test_all_years)
 mse3 <- mean((my_pred3 - test_all_years$salinity)^2)
 r_squared3 <- 1 - sum((test_all_years$salinity - my_pred3)^2) / sum((test_all_years$salinity - mean(test_all_years$salinity))^2)
 
-# All did around 77%
+# All did around .77
 
 ## --------------------------------------------- ##
 #       Modeling: For Subset of Years -----
@@ -137,6 +138,7 @@ my_pred7 <- predict(rf_model5, newdata = DBSAL_2015)
 mse7 <- mean((my_pred7 - DBSAL_2015$salinity)^2)
 r_squared7 <- 1 - sum((DBSAL_2015$salinity - my_pred7)^2) / sum((DBSAL_2015$salinity - mean(DBSAL_2015$salinity))^2)
 
+# Still pretty bad
 
 # Subset to 2013-2019
 DBSAL_some_years <- DBSAL_v2 %>%
@@ -167,7 +169,7 @@ my_pred9 <- predict(rf_model6, newdata = DBSAL_other_subset)
 mse9 <- mean((my_pred9 - DBSAL_other_subset$salinity)^2)
 r_squared9 <- 1 - sum((DBSAL_other_subset$salinity - my_pred9)^2) / sum((DBSAL_other_subset$salinity - mean(DBSAL_other_subset$salinity))^2)
 
-# Did better than when I trained on 1 year and predicted for the next year
+# Did slightly better than when I trained on 1 year and predicted for the next year
 
 ## --------------------------------------------- ##
 #            Feature Selection -----
@@ -204,10 +206,18 @@ model <- train(salinity ~  precip + srad + tavg + elevation + slope + distCoast 
                data = train_all_years, method = "rf", trControl = ctrl)
 print(model)
 
+# Best mtry is 12
 
-# --------------------------
-# xgb_model <- xgboost(train[,c(7:22, 24:30)], train[,6], nthreads = 1, nrounds = 2, objective = "reg:squarederror")
-# 
-# my_pred2 <- predict(xgb_model, test)
-# mse2 <- mean((my_pred2 - test$salinity)^2)
-# r_squared2 <- 1 - sum((test$salinity - my_pred2)^2) / sum((test$salinity - mean(test$salinity))^2)
+## --------------------------------------------- ##
+#              Gradient Boosting -----
+## --------------------------------------------- ##
+
+xgb_model <- xgboost(train_all_years[, c(7:22, 24:30)], train_all_years$salinity, 
+                     objective = "reg:squarederror",
+                     nrounds = 200)
+
+my_pred11 <- predict(xgb_model, test_all_years)
+mse11 <- mean((my_pred11 - test_all_years$salinity)^2)
+r_squared11 <- 1 - sum((test_all_years$salinity - my_pred11)^2) / sum((test_all_years$salinity - mean(test_all_years$salinity))^2)
+
+# Around same performance as random forest
