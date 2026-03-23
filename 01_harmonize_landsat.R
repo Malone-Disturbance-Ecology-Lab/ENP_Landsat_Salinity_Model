@@ -17,15 +17,24 @@ library(terra)
 # Create new folder to store rasters
 dir.create(path = file.path("harmonized_appeears_landsat_data"), showWarnings = F)
 
+# Create new folder to store rasters
+dir.create(path = file.path("harmonized_appeears_landsat_data", "L30"), showWarnings = F)
+
+# Create new folder to store rasters
+dir.create(path = file.path("harmonized_appeears_landsat_data", "S30"), showWarnings = F)
+
+# Create new folder to store rasters
+dir.create(path = file.path("harmonized_appeears_landsat_data", "L30_S30"), showWarnings = F)
+
 ## --------------------------------------------- ##
 #                   Function:
 #   Fixing rasters with different extents -----
 ## --------------------------------------------- ##
 
-fix_extent <- function(band_name){
+fix_extent <- function(band_name, type){
   
   # Get list of relevant tif files
-  band_files_v0 <- dir(file.path("appeears_landsat_data", band_name), pattern = band_name, full.names = T)
+  band_files_v0 <- dir(file.path("appeears_landsat_data", type, band_name), pattern = band_name, full.names = T)
   
   # Create empty list for rasters that have a different extent
   diff_extent <- list()
@@ -53,11 +62,18 @@ fix_extent <- function(band_name){
   # Bands 10 and 11 have a scale factor of 0.01
   # Fmask has a scale factor of 1
   # All other bands have a scale factor of 0.0001
-  if (band_name == "B10" | band_name == "B11"){
-    scale_factor <- 0.01 
-  } else if (band_name == "Fmask"){
-    scale_factor <- 1
-  } else {
+  
+  if (type == "L30"){
+    if (band_name == "B10" | band_name == "B11"){
+      scale_factor <- 0.01 
+    } else if (band_name == "Fmask"){
+      scale_factor <- 1
+    } else {
+      scale_factor <- 0.0001
+    }
+  }
+  
+  if (type == "S30"){
     scale_factor <- 0.0001
   }
   
@@ -107,7 +123,7 @@ fix_extent <- function(band_name){
 #      Adding dates to raster metadata -----
 ## --------------------------------------------- ##
 
-add_dates <- function(band_name, harmonized_band){
+add_dates <- function(band_name, harmonized_band, type){
   # Extract the year and doy info
   year_doy <- stringr::str_extract(names(harmonized_band), "[:digit:]{7}")
   
@@ -136,18 +152,35 @@ add_dates <- function(band_name, harmonized_band){
   
   # Export harmonized raster
   terra::writeRaster(harmonized_band, 
-                     file.path("harmonized_appeears_landsat_data", paste0("ENP_Landsat_", band_name, ".tif")),
+                     file.path("harmonized_appeears_landsat_data", type, paste0(type, "_ENP_", band_name, ".tif")),
                      overwrite = T)
 }
 
 ## --------------------------------------------- ##
-#               Harmonizing -----
+#             Harmonizing Each Type -----
 ## --------------------------------------------- ##
 
-# Needed layers: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
+# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
+# Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12"
 # Harmonize as needed
 
+my_type <- "S30"
 my_band <- "Fmask"
 
-band_fix_extent <- fix_extent(band_name = my_band)
-add_dates(band_name = my_band, harmonized_band = band_fix_extent)
+band_fix_extent <- fix_extent(band_name = my_band, type = my_type)
+add_dates(band_name = my_band, harmonized_band = band_fix_extent, type = my_type)
+
+## --------------------------------------------- ##
+#     Harmonizing L30 and S30 Altogether -----
+## --------------------------------------------- ##
+
+L30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B01.tif"))
+S30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B01.tif"))
+
+L30_S30_B01 <- c(L30_B01, S30_B01)
+
+L30_S30_B01_sort <- terra::subset(L30_S30_B01, order(stringr::str_extract(names(L30_S30_B01), "[:digit:]{7}")))
+
+terra::writeRaster(L30_S30_B01_sort, 
+                   file.path("harmonized_appeears_landsat_data", "L30_S30", "L30_S30_ENP_B01.tif"),
+                   overwrite = T)
