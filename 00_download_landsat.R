@@ -65,8 +65,8 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 # Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12"
 # Create AppEEARS requests as needed
 
-my_task <- "surf_reflect_S30_ENP_B04"
-my_layers <- "B04"
+my_task <- "surf_reflect_S30_ENP_B12"
+my_layers <- "B12"
 
 # Create a dataframe for your AppEEARS task
 df <- data.frame(
