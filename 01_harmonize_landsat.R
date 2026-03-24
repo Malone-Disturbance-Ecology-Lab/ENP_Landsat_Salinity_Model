@@ -74,7 +74,11 @@ fix_extent <- function(band_name, type){
   }
   
   if (type == "S30"){
-    scale_factor <- 0.0001
+    if (band_name == "Fmask"){
+      scale_factor <- 1
+    } else {
+      scale_factor <- 0.0001
+    }
   }
   
   # Create empty list to store fixed rasters
@@ -174,13 +178,15 @@ add_dates(band_name = my_band, harmonized_band = band_fix_extent, type = my_type
 #     Harmonizing L30 and S30 Altogether -----
 ## --------------------------------------------- ##
 
-L30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B01.tif"))
-S30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B01.tif"))
+band_num <- "B01"
 
-L30_S30_B01 <- c(L30_B01, S30_B01)
+L30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", paste0("L30_ENP_", band_num, ".tif")))
+S30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", paste0("S30_ENP_", band_num, ".tif")))
 
-L30_S30_B01_sort <- terra::subset(L30_S30_B01, order(stringr::str_extract(names(L30_S30_B01), "[:digit:]{7}")))
+L30_S30_band <- c(L30_band, S30_band)
 
-terra::writeRaster(L30_S30_B01_sort, 
-                   file.path("harmonized_appeears_landsat_data", "L30_S30", "L30_S30_ENP_B01.tif"),
+L30_S30_band_sort <- terra::subset(L30_S30_band, order(stringr::str_extract(names(L30_S30_band), "[:digit:]{7}")))
+
+terra::writeRaster(L30_S30_band_sort, 
+                   file.path("harmonized_appeears_landsat_data", "L30_S30", paste0("L30_S30_ENP_", band_num, ".tif")),
                    overwrite = T)
