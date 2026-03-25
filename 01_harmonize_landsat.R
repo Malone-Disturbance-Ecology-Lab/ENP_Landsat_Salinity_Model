@@ -73,6 +73,8 @@ fix_extent <- function(band_name, type){
     }
   }
   
+  # All S30 bands (except for Fmask) have a scale factor of 0.0001
+  
   if (type == "S30"){
     if (band_name == "Fmask"){
       scale_factor <- 1
@@ -169,7 +171,7 @@ add_dates <- function(band_name, harmonized_band, type){
 # Harmonize as needed
 
 my_type <- "S30"
-my_band <- "Fmask"
+my_band <- "B01"
 
 band_fix_extent <- fix_extent(band_name = my_band, type = my_type)
 add_dates(band_name = my_band, harmonized_band = band_fix_extent, type = my_type)
@@ -178,15 +180,36 @@ add_dates(band_name = my_band, harmonized_band = band_fix_extent, type = my_type
 #     Harmonizing L30 and S30 Altogether -----
 ## --------------------------------------------- ##
 
-band_num <- "B01"
+# Combining L30 and S30 takes too long due to the sheer number of layers
+# Commenting this part of the workflow out
 
-L30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", paste0("L30_ENP_", band_num, ".tif")))
-S30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", paste0("S30_ENP_", band_num, ".tif")))
+# Corresponding bands: 
+# L30 B01 == S30 B01
+# L30 B02 == S30 B02
+# L30 B03 == S30 B03
+# L30 B04 == S30 B04
+# L30 B05 == S30 B8A
+# L30 B06 == S30 B11
+# L30 B07 == S30 B12
 
-L30_S30_band <- c(L30_band, S30_band)
-
-L30_S30_band_sort <- terra::subset(L30_S30_band, order(stringr::str_extract(names(L30_S30_band), "[:digit:]{7}")))
-
-terra::writeRaster(L30_S30_band_sort, 
-                   file.path("harmonized_appeears_landsat_data", "L30_S30", paste0("L30_S30_ENP_", band_num, ".tif")),
-                   overwrite = T)
+# # Indicate the bands of interest
+# L30_band_num <- "B01"
+# S30_band_num <- "B01"
+# 
+# # Read them in
+# L30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", paste0("L30_ENP_", L30_band_num, ".tif")))
+# S30_band <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", paste0("S30_ENP_", S30_band_num, ".tif")))
+# 
+# # Combine them into one SpatRaster
+# L30_S30_band <- c(L30_band, S30_band)
+# # Order the layers by date
+# L30_S30_band_sort <- terra::subset(L30_S30_band, order(stringr::str_extract(names(L30_S30_band), "[:digit:]{7}")))
+# 
+# # Check
+# time(L30_S30_band_sort)
+# names(L30_S30_band_sort)
+# 
+# # Export
+# terra::writeRaster(L30_S30_band_sort, 
+#                    file.path("harmonized_appeears_landsat_data", "L30_S30", paste0("L30_S30_ENP_", L30_band_num, ".tif")),
+#                    overwrite = T)
