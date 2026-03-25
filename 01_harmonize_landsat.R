@@ -23,8 +23,8 @@ dir.create(path = file.path("harmonized_appeears_landsat_data", "L30"), showWarn
 # Create new folder to store rasters
 dir.create(path = file.path("harmonized_appeears_landsat_data", "S30"), showWarnings = F)
 
-# Create new folder to store rasters
-dir.create(path = file.path("harmonized_appeears_landsat_data", "L30_S30"), showWarnings = F)
+# # Create new folder to store rasters
+# dir.create(path = file.path("harmonized_appeears_landsat_data", "L30_S30"), showWarnings = F)
 
 ## --------------------------------------------- ##
 #                   Function:
