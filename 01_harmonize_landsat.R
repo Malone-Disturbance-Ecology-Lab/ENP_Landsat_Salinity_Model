@@ -83,6 +83,8 @@ fix_extent <- function(band_name, type){
     }
   }
   
+  message(paste("Scale factor for this band:", scale_factor))
+  
   # Create empty list to store fixed rasters
   fixed_rasters_list <- list()
   # For every raster with a different extent...
@@ -167,11 +169,11 @@ add_dates <- function(band_name, harmonized_band, type){
 ## --------------------------------------------- ##
 
 # Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
-# Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12"
+# Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12", "Fmask"
 # Harmonize as needed
 
 my_type <- "S30"
-my_band <- "B01"
+my_band <- "Fmask"
 
 band_fix_extent <- fix_extent(band_name = my_band, type = my_type)
 add_dates(band_name = my_band, harmonized_band = band_fix_extent, type = my_type)
