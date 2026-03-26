@@ -22,17 +22,24 @@ library(tsibble)
 landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
 
 # Read in Landsat files
-B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B01.tif"))
-B02 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B02.tif"))
-B03 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B03.tif"))
-B04 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B04.tif"))
-B05 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B05.tif"))
-B06 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B06.tif"))
-B07 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B07.tif"))
-B09 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B09.tif"))
-B10 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B10.tif"))
-B11 <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_B11.tif"))
-Fmask <- terra::rast(file.path("harmonized_appeears_landsat_data", "ENP_Landsat_Fmask.tif"))
+L30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B01.tif"))
+L30_B02 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B02.tif"))
+L30_B03 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B03.tif"))
+L30_B04 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B04.tif"))
+L30_B05 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B05.tif"))
+L30_B06 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B06.tif"))
+L30_B07 <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_B07.tif"))
+L30_Fmask <- terra::rast(file.path("harmonized_appeears_landsat_data", "L30", "L30_ENP_Fmask.tif"))
+
+# Read in Sentinel files
+S30_B01 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B01.tif"))
+S30_B02 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B02.tif"))
+S30_B03 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B03.tif"))
+S30_B04 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B04.tif"))
+S30_B8A <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B8A.tif"))
+S30_B11 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B11.tif"))
+S30_B12 <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_B12.tif"))
+S30_Fmask <- terra::rast(file.path("harmonized_appeears_landsat_data", "S30", "S30_ENP_Fmask.tif"))
 
 # Point to precip, solar radiation, temp files
 precip_files <- dir(file.path(landsat_salinity_folder, "ENP_Precipitation_Landsat_res"), pattern = ".tif", full.names = T)
@@ -54,16 +61,17 @@ DBHydro_sf <- sf::st_read(file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
 DBHydro_df <- readr::read_csv(file.path("ENP_DBHydro_salinity_df.csv"))
 # Make the DBHydro station shapefile have the same CRS as Landsat just in case
 DBHydro_sf_v2 <- DBHydro_sf %>%
-  sf::st_transform(sf::st_crs(B01))
+  sf::st_transform(sf::st_crs(L30_B01))
 
 # Make sure all CRS are the same as the Landsat
-terra::crs(B01) == terra::crs(test_precip_r)
-terra::crs(B01) == terra::crs(test_solar_rad_r)
-terra::crs(B01) == terra::crs(test_temp_r)
-terra::crs(B01) == terra::crs(ele_r)
-terra::crs(B01) == terra::crs(slope_r)
-terra::crs(B01) == terra::crs(dist_r)
-terra::crs(B01) == terra::crs(DBHydro_sf_v2)
+terra::crs(L30_B01) == terra::crs(S30_B01)
+terra::crs(L30_B01) == terra::crs(test_precip_r)
+terra::crs(L30_B01) == terra::crs(test_solar_rad_r)
+terra::crs(L30_B01) == terra::crs(test_temp_r)
+terra::crs(L30_B01) == terra::crs(ele_r)
+terra::crs(L30_B01) == terra::crs(slope_r)
+terra::crs(L30_B01) == terra::crs(dist_r)
+terra::crs(L30_B01) == terra::crs(DBHydro_sf_v2)
 
 ## --------------------------------------------------------- ##
 #                Create Extraction Function -----
@@ -97,13 +105,12 @@ extract_from_raster <- function(raster, point_shapefile, new_column_name){
 ## --------------------------------------------------------- ##
 
 # List our current bands together
-landsat_bands_list <- list(B01, B02, B03, B04, B05,
-                           B06, B07, B09, B10, B11,
-                           Fmask)
+landsat_bands_list <- list(L30_B01, L30_B02, L30_B03, L30_B04, 
+                           L30_B05, L30_B06, L30_B07, L30_Fmask)
+
 # List their names
-landsat_names_list <- list("B01", "B02", "B03", "B04", "B05",
-                           "B06", "B07", "B09", "B10", "B11",
-                           "Fmask")
+landsat_names_list <- list("B01", "B02", "B03", "B04", 
+                           "B05", "B06", "B07", "Fmask")
 
 # Create an empty list to store our extracted points
 landsat_points_list <- list()
@@ -126,8 +133,7 @@ landsat_points <- landsat_points_list %>%
   # These empty rows come from Landsat rasters that only cover a small portion of ENP on that day
   dplyr::filter(!dplyr::if_all(starts_with("B"), is.na)) %>% 
   # Apply the Landsat scale factors to convert to original values
-  dplyr::mutate(dplyr::across(.cols = B01:B09, .fns = ~.x * 0.0001)) %>%
-  dplyr::mutate(dplyr::across(.cols = B10:B11, .fns = ~.x * 0.01)) %>%
+  dplyr::mutate(dplyr::across(.cols = B01:B07, .fns = ~.x * 0.0001)) %>%
   # Calculate indices
   dplyr::mutate(NDVI = (B05 - B04) / (B05 + B04),
                 SI = (B03*B04)^0.5,
@@ -137,10 +143,75 @@ landsat_points <- landsat_points_list %>%
                 CRSI = ((B05*B04-B03*B02)/((B05*B04+B03*B02)))^0.5,
                 NDSI = (B05 - B06) / (B05 + B06)) %>%
   # Rename date column to landsat_date
-  dplyr::rename(landsat_date = date)
+  dplyr::rename(landsat_date = date) %>%
+  # Create an instrument column
+  dplyr::mutate(instrument = "Landsat")
 
 # Create a formatted date column
 landsat_points$formatted_date <- as.Date(landsat_points$landsat_date)
+
+## --------------------------------------------------------- ##
+#                 Extraction: Sentinel -----
+## --------------------------------------------------------- ##
+
+# List our current bands together
+sentinel_bands_list <- list(S30_B01, S30_B02, S30_B03, S30_B04,
+                            S30_B8A, S30_B11, S30_B12, S30_Fmask)
+
+# List their names
+sentinel_names_list <- list("B01", "B02", "B03", "B04",
+                           "B8A", "B11", "B12", "Fmask")
+
+# Create an empty list to store our extracted points
+sentinel_points_list <- list()
+
+# For every band...
+for (i in seq_along(sentinel_bands_list)){
+  # Extract the Landsat data for the points
+  band_points <- extract_from_raster(raster = sentinel_bands_list[[i]],
+                                     point_shapefile = terra::vect(DBHydro_sf_v2),
+                                     new_column_name = sentinel_names_list[[i]])
+  
+  # Save to list
+  sentinel_points_list[[i]] <- band_points
+}
+
+sentinel_points <- sentinel_points_list %>%
+  # Join all extracted Sentinel points by ID, station, date columns
+  purrr::reduce(dplyr::full_join, by = c("ID", "station", "date")) %>% 
+  # Drop the rows where all the bands have NA values
+  # These empty rows come from Sentinel rasters that only cover a small portion of ENP on that day
+  dplyr::filter(!dplyr::if_all(starts_with("B"), is.na)) %>% 
+  # Apply the Sentinel scale factors to convert to original values
+  dplyr::mutate(dplyr::across(.cols = B01:B12, .fns = ~.x * 0.0001)) %>%
+  # Calculate indices
+  dplyr::mutate(NDVI = (B8A - B04) / (B8A + B04),
+                SI = (B03*B04)^0.5,
+                NLI = (B8A^2 - B04)/(B8A^2 + B04),
+                SRSI = ((NDVI - 1)^2 + SI^2)^0.5,
+                S7 = (B11 - B12)/(B11 + B12),
+                CRSI = ((B8A*B04-B03*B02)/((B8A*B04+B03*B02)))^0.5,
+                NDSI = (B8A - B11) / (B8A + B11)) %>%
+  # Rename date column to sentinel_date
+  dplyr::rename(sentinel_date = date) %>%
+  # Create an instrument column
+  dplyr::mutate(instrument = "Sentinel") %>%
+  # Rename Sentinel band columns to correspond to their Landsat equivalents
+  dplyr::rename(B05 = B8A) %>%
+  dplyr::rename(B06 = B11) %>%
+  dplyr::rename(B07 = B12)
+
+# Create a formatted date column
+sentinel_points$formatted_date <- as.Date(sentinel_points$sentinel_date)
+
+## --------------------------------------------------------- ##
+#             Combining: Landsat and Sentinel -----
+## --------------------------------------------------------- ##
+
+landsat_sentinel_points <- dplyr::full_join(landsat_points, sentinel_points)
+
+# Check dates that have both Landsat and Sentinel measurements
+#intersect(landsat_sentinel_points$landsat_date, landsat_sentinel_points$sentinel_date)
 
 ## --------------------------------------------------------- ##
 #       Extraction: Precip, Solar Radiation, Temp -----
@@ -259,26 +330,32 @@ sal_met_ele_slope_dist <- DBHydro_sal_df %>%
   # Left join salinity+met points with elevation+slope+distance
   dplyr::left_join(ele_slope_dist_points, by = c("ID", "station")) 
 
-# Finally full join salinity+met+elevation+slope+distance with extracted Landsat points
-DBSAL <- dplyr::full_join(sal_met_ele_slope_dist, landsat_points, by = c("ID", "station", "formatted_date")) %>%
+# Finally full join salinity+met+elevation+slope+distance with extracted Landsat+Sentinel points
+# May see a "many-to-many" warning message
+# This is because there are some stations where multiple salinity measurements were taken in a single day
+# And also because there are some days that have both Landsat and Sentinel measurements
+DBSAL <- dplyr::full_join(sal_met_ele_slope_dist, landsat_sentinel_points, by = c("ID", "station", "formatted_date")) %>%
   # Drop redundant ID column
   dplyr::select(-ID) %>%
   # Reorder columns
   dplyr::relocate(formatted_date, .after = station) %>%
   dplyr::relocate(landsat_date, .after = formatted_date) %>%
-  dplyr::relocate(grab, .after = landsat_date) %>%
+  dplyr::relocate(sentinel_date, .after = landsat_date) %>%
+  dplyr::relocate(grab, .after = sentinel_date) %>%
+  dplyr::relocate(Fmask, .after = NDSI) %>%
+  dplyr::relocate(instrument, .after = formatted_date) %>%
   # Create a flag column for rows with salinity measurements
   dplyr::mutate(has_salinity = dplyr::case_when(
     !is.na(salinity) ~ 1,
     T ~ 0
   ), .after = formatted_date) %>%
   # Create a flag column for rows with Landsat measurements
-  dplyr::mutate(has_landsat = dplyr::case_when(
-    !is.na(landsat_date) ~ 1,
+  dplyr::mutate(has_surf_ref = dplyr::case_when(
+    !is.na(landsat_date) | !is.na(sentinel_date) ~ 1,
     T ~ 0
   ), .after = has_salinity) %>%
-  # Drop landsat_date column
-  dplyr::select(-landsat_date) %>%
+  # Drop landsat_date, sentinel_date columns
+  dplyr::select(-c(landsat_date, sentinel_date)) %>%
   # Order by salinity_date and station
   dplyr::arrange(formatted_date, station)
 
