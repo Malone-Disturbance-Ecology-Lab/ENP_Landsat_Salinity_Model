@@ -6,7 +6,7 @@
 # Purpose:
 ## This script investigates tree-based models for predicting salinity in the Everglades
 ## with predictors precip, solar radiation, avg temperature, elevation, slope,
-## distance to coast, Landsat bands, NDVI, SI, NLI, SRSI, S7, CRSI, NDSI
+## distance to coast, Landsat+Sentinel bands, NDVI, SI, NLI, SRSI, S7, CRSI, NDSI
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
