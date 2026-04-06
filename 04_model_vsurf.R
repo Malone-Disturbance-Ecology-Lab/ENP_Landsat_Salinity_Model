@@ -1,4 +1,13 @@
 ## --------------------------------------------- ##
+#                 VSURF Models
+## --------------------------------------------- ##
+# Script author(s): Angel Chen
+
+# Purpose:
+## This script uses VSURF to choose the best predictors to predict salinity in the Everglades
+## by training on chunks of 4 and 5-year data intervals
+
+## --------------------------------------------- ##
 #               Housekeeping -----
 ## --------------------------------------------- ##
 
