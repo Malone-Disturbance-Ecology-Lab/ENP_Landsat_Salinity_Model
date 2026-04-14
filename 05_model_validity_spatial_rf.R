@@ -172,6 +172,7 @@ mse2 <- mean((my_pred2 - DBSAL_next_years$salinity)^2)
 r_squared2 <- 1 - sum((DBSAL_next_years$salinity - my_pred2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
 # 0.54  
 
+# Add a new column for predicted values
 DBSAL_next_years_v2 <- DBSAL_next_years %>%
   dplyr::mutate(pred = my_pred2)
 
