@@ -46,6 +46,9 @@ set.seed(77)
 start_year <- 2017
 my_interval <- 5
 
+# Specify the next years to predict for (need to do 2 through 5)
+next_years <- 2
+
 # Subset to interval
 DBSAL_some_years <- DBSAL_v2 %>%
   dplyr::filter(formatted_date >= as.Date(paste0(start_year,"-01-01")) & formatted_date < as.Date(paste0(start_year+my_interval,"-01-01")))
@@ -69,12 +72,23 @@ mse <- mean((my_pred - test_some_years$salinity)^2)
 r_squared <- 1 - sum((test_some_years$salinity - my_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
 # 0.75
 
+# Predict for next X years
+DBSAL_next_years <- DBSAL %>%
+  dplyr::filter(formatted_date >= as.Date(paste0(start_year+my_interval,"-01-01")) & formatted_date < as.Date(paste0(start_year+my_interval+next_years,"-01-01")))
+
+my_pred2 <- predict(rf_model, newdata = DBSAL_next_years)
+mse2 <- mean((my_pred2 - DBSAL_next_years$salinity)^2)
+r_squared2 <- 1 - sum((DBSAL_next_years$salinity - my_pred2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
+# 0.60 
+
+# Add a new column for predicted values
+DBSAL_next_years_v2 <- DBSAL_next_years %>%
+  dplyr::mutate(pred = my_pred2)
+
 # Create lists to store our results
 r_sq1_list <- list()
 r_sq2_list <- list()
 stations <- list()
-# Specify the next years to predict for (need to do 2 through 5)
-next_years <- 2
 
 for (i in seq_along(unique(DBSAL$station))){
   
@@ -82,34 +96,25 @@ for (i in seq_along(unique(DBSAL$station))){
   
   message(paste("station:", unique(DBSAL$station)[i]))
   
-  station_sub <- DBSAL %>%
+  station_sub <- DBSAL_next_years_v2 %>%
     # Filter to one station
-    dplyr::filter(station == unique(DBSAL$station)[i]) %>%
-    # Filter to specified next years for predictions
-    dplyr::filter(formatted_date >= as.Date(paste0(start_year+my_interval,"-01-01")) & formatted_date < as.Date(paste0(start_year+my_interval+next_years,"-01-01")))
-  
-  # Make predictions for station subset
-  station_pred <- predict(rf_model, newdata = station_sub)
-  
-  # Attach predictions to station subset as a new column
-  station_sub_v2 <- station_sub %>%
-    dplyr::mutate(pred = station_pred)
+    dplyr::filter(station == unique(DBSAL$station)[i]) 
   
   # Plot to check
-  # ggplot() + geom_point(aes(x=station_sub_v2$salinity, y=station_sub_v2$pred)) +
+  # ggplot() + geom_point(aes(x=station_sub$salinity, y=station_sub$pred)) +
   #   geom_smooth(method='lm')
   
   # One way to get R-squared
-  # model <- lm(station_sub_v2$salinity ~ station_sub_v2$pred)
+  # model <- lm(station_sub$salinity ~ station_sub$pred)
   # summary(model)$r.squared
   
   # Grab Pearson's correlation squared
-  r_sq1 <- caret::postResample(obs = station_sub_v2$salinity, pred = station_sub_v2$pred)
+  r_sq1 <- caret::postResample(obs = station_sub$salinity, pred = station_sub$pred)
   r_sq1_list[[i]] <- r_sq1[2]
   message(paste("r_sq1:", r_sq1[2]))
   
   # Calculate coefficient of determination
-  r_sq2 <- 1 - sum((station_sub_v2$salinity - station_sub_v2$pred)^2) / sum((station_sub_v2$salinity - mean(station_sub_v2$salinity))^2)
+  r_sq2 <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
   r_sq2_list[[i]] <- r_sq2
   message(paste("r_sq2:", r_sq2))
   
