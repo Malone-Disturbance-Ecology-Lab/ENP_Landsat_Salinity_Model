@@ -47,7 +47,7 @@ distance_station_pairs <- station_pairs %>%
   dplyr::rename(station1_coord = geometry.x) %>%
   dplyr::rename(station2_coord = geometry.y) %>%
   # Calculate distance between each unique pair of stations
-  dplyr::mutate(dist = sf::st_distance(station1_coord, station2_coord, by_element = TRUE))
+  dplyr::mutate(dist_m = sf::st_distance(station1_coord, station2_coord, by_element = TRUE))
   
 # Export
 readr::write_csv(distance_station_pairs, "distance_station_pairs.csv")
