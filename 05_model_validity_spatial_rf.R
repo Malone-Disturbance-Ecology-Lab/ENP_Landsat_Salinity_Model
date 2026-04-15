@@ -267,10 +267,12 @@ readr::write_csv(unique_pairs2, file.path("model_validity_results",
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
+distance_station_pairs <- readr::read_csv("distance_station_pairs.csv")
+
 # List files 
 files_to_harmonize <- list.files(path = file.path("model_validity_results",
                                                   "random_forest",
-                                                  "2017_2021"),
+                                                  "2016_2020"),
                                  pattern = "station_pairs_rsquared", full.names = T)
 
 results_harmonized <- files_to_harmonize %>%
@@ -280,15 +282,24 @@ results_harmonized <- files_to_harmonize %>%
   purrr::list_rbind(x = .) %>%
   # Create new column to indicate model type
   dplyr::mutate(model_name = "rf", .before = type) %>%
+  # Pivot wider to reorganize
   tidyr::pivot_wider(names_from = type,
                      values_from = pearsons_sq_next_5_years) %>%
+  # Rename pivoted columns
   dplyr::rename(rsq_for_obs_station_pairs = obs) %>%
   dplyr::rename(rsq_for_pred_station_pairs = pred) %>%
+  # Round values
   dplyr::mutate(rsq_for_obs_station_pairs = round(rsq_for_obs_station_pairs, digits = 4),
-                rsq_for_pred_station_pairs = round(rsq_for_pred_station_pairs, digits = 4))
+                rsq_for_pred_station_pairs = round(rsq_for_pred_station_pairs, digits = 4)) %>%
+  # Combine with distance between stations info
+  dplyr::left_join(distance_station_pairs) %>%
+  # Drop station coordinates
+  dplyr::select(-station1_coord, -station2_coord) %>%
+  # Create new column with difference between R-squared values for observed and predicted data
+  dplyr::mutate(rsq_abs_diff = abs(rsq_for_obs_station_pairs - rsq_for_pred_station_pairs), .before = dist_m)
 
 # Export to CSV
 readr::write_csv(results_harmonized, file.path("model_validity_results", 
                                           "random_forest",
-                                          "2017_2021",
-                                          "rf_station_pairs_2017_2021_harmonized.csv"))
+                                          "2016_2020",
+                                          "rf_station_pairs_2016_2020_harmonized.csv"))
