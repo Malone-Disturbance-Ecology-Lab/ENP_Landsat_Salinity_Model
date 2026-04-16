@@ -21,6 +21,7 @@ library(parallel)
 # Create new folders to store results
 dir.create(path = file.path("vsurf_4_years_results"), showWarnings = F)
 dir.create(path = file.path("vsurf_5_years_results"), showWarnings = F)
+dir.create(path = file.path("vsurf_8_years_results"), showWarnings = F)
 
 DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>% 
   # Remove missing values
@@ -34,9 +35,9 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
 
 DBSAL_v2 <- DBSAL %>%
   # Filter out cloudy days
-  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) %>%
-  # Grab only continuous values
-  dplyr::filter(grab == 0)
+  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+  # # Grab only continuous values
+  # dplyr::filter(grab == 0)
 
 ## --------------------------------------------- ##
 #                 Modeling -----
@@ -45,8 +46,8 @@ DBSAL_v2 <- DBSAL %>%
 set.seed(77)
 
 #start_years <- c(2014, 2015, 2016, 2017)
-start_years <- c(2020)
-my_interval <- 5
+start_years <- c(2013)
+my_interval <- 8
 
 for (i in start_years) {
   
@@ -79,27 +80,26 @@ for (i in start_years) {
   r_squared1 <- 1 - sum((test_some_years$salinity - predictions1)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
   
   # Predict for next 2 years
-  DBSAL_next_years <- DBSAL_v2 %>%
+  DBSAL_next_years <- DBSAL %>%
     dplyr::filter(formatted_date >= as.Date(paste0(i+my_interval,"-01-01")) & formatted_date < as.Date(paste0(i+my_interval+2,"-01-01")))
   
   
   predictions2 <- predict(rf_vsurf, newdata = DBSAL_next_years, step = "pred")
   mse2 <- mean((predictions2 - DBSAL_next_years$salinity)^2)
   r_squared2 <- 1 - sum((DBSAL_next_years$salinity - predictions2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
-  
-  
+
+    
   # Predict for next 3 years
-  DBSAL_next_years <- DBSAL_v2 %>%
+  DBSAL_next_years <- DBSAL %>%
     dplyr::filter(formatted_date >= as.Date(paste0(i+my_interval,"-01-01")) & formatted_date < as.Date(paste0(i+my_interval+3,"-01-01")))
   
   
   predictions3 <- predict(rf_vsurf, newdata = DBSAL_next_years, step = "pred")
   mse3 <- mean((predictions3 - DBSAL_next_years$salinity)^2)
   r_squared3 <- 1 - sum((DBSAL_next_years$salinity - predictions3)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
-  
-  
+
   # Predict for next 4 years
-  DBSAL_next_years <- DBSAL_v2 %>%
+  DBSAL_next_years <- DBSAL %>%
     dplyr::filter(formatted_date >= as.Date(paste0(i+my_interval,"-01-01")) & formatted_date < as.Date(paste0(i+my_interval+4,"-01-01")))
   
   
@@ -107,9 +107,9 @@ for (i in start_years) {
   mse4 <- mean((predictions4 - DBSAL_next_years$salinity)^2)
   r_squared4 <- 1 - sum((DBSAL_next_years$salinity - predictions4)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
   
-  
+
   # Predict for next 5 years
-  DBSAL_next_years <- DBSAL_v2 %>%
+  DBSAL_next_years <- DBSAL %>%
     dplyr::filter(formatted_date >= as.Date(paste0(i+my_interval,"-01-01")) & formatted_date < as.Date(paste0(i+my_interval+5,"-01-01")))
   
   
@@ -129,6 +129,7 @@ for (i in start_years) {
                 R_squared_next_5_years = r_squared5)
   
   # Export as CSV
-  readr::write_csv(result, 
+  readr::write_csv(result,
                    file.path(paste0("vsurf_", my_interval, "_years_results"), paste0("vsurf_", selected_interval, ".csv")))
 }
+

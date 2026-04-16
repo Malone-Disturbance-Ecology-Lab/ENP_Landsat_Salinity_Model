@@ -21,6 +21,7 @@ dir.create(path = file.path("model_validity_results"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest", "2016_2020"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest", "2017_2021"), showWarnings = F)
+dir.create(path = file.path("model_validity_results", "random_forest", "2013_2020"), showWarnings = F)
 
 DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>% 
   # Remove missing values
@@ -34,20 +35,20 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
 
 DBSAL_v2 <- DBSAL %>%
   # Filter out cloudy days
-  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) %>%
-  # Grab only continuous values
-  dplyr::filter(grab == 0)
+  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+  # # Grab only continuous values
+  # dplyr::filter(grab == 0)
 
 ## --------------------------------------------- ##
 #                 Modeling -----
 ## --------------------------------------------- ##
 
 set.seed(77)
-start_year <- 2017
-my_interval <- 5
+start_year <- 2013
+my_interval <- 8
 
 # Specify the next years to predict for (need to do 2 through 5)
-next_years <- 2
+next_years <- 3
 
 # Subset to interval
 DBSAL_some_years <- DBSAL_v2 %>%
@@ -60,9 +61,10 @@ test_some_years <- DBSAL_some_years[-sample1,]
 
 # Random forest modeling
 # Picked variables based on VSURF results
-# 2016: distCoast+slope+B03+srad+CRSI+SI+NDSI+B06+tavg
-# 2017: distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg
-rf_model <- randomForest(salinity ~  distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg,
+# 2016 - 2020: distCoast+slope+B03+srad+CRSI+SI+NDSI+B06+tavg
+# 2017 - 2021: distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg
+# 2013 - 2020: distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg
+rf_model <- randomForest(salinity ~ distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg,
                          data = train_some_years,
                          importance = TRUE)
 
@@ -70,7 +72,7 @@ rf_model <- randomForest(salinity ~  distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B
 my_pred <- predict(rf_model, newdata = test_some_years)
 mse <- mean((my_pred - test_some_years$salinity)^2)
 r_squared <- 1 - sum((test_some_years$salinity - my_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
-# 0.75
+# 0.76
 
 # Predict for next X years
 DBSAL_next_years <- DBSAL %>%
@@ -79,7 +81,7 @@ DBSAL_next_years <- DBSAL %>%
 my_pred2 <- predict(rf_model, newdata = DBSAL_next_years)
 mse2 <- mean((my_pred2 - DBSAL_next_years$salinity)^2)
 r_squared2 <- 1 - sum((DBSAL_next_years$salinity - my_pred2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
-# 0.60 
+# 0.59 
 
 # Add a new column for predicted values
 DBSAL_next_years_v2 <- DBSAL_next_years %>%
@@ -124,9 +126,9 @@ for (i in seq_along(unique(DBSAL$station))){
 results <- data.frame(training_years = paste0(start_year, "-", start_year+my_interval-1),
                    variables = paste(rownames(rf_model$importance), collapse = ", "),
                    station_name = unlist(stations),
-                   # Change column names here
-                   pearsons_sq_next_2_years = round(unlist(r_sq1_list), digits = 4),
-                   coeff_det_next_2_years = round(unlist(r_sq2_list), digits = 4))
+                   # Change column names here ----------------
+                   pearsons_sq_next_3_years = round(unlist(r_sq1_list), digits = 4),
+                   coeff_det_next_3_years = round(unlist(r_sq2_list), digits = 4))
 
 # Export to CSV
 readr::write_csv(results, file.path("model_validity_results", 
@@ -138,22 +140,22 @@ readr::write_csv(results, file.path("model_validity_results",
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
-# List files 
-files_to_harmonize <- list.files(path = file.path("model_validity_results",
-                                                  "random_forest",
-                                                  "2017_2021"),
-                                 pattern = "obs_vs_pred_next_", full.names = T)
-
-results_harmonized <- files_to_harmonize %>%
-  # Read in files as CSVs
-  purrr::map(read.csv) %>%
-  # Combine them together
-  purrr::reduce(dplyr::left_join, by = c("training_years", "variables", "station_name")) %>%
-  # Create new column to indicate model type
-  dplyr::mutate(model_name = "rf", .before = training_years)
-
-# Export to CSV
-readr::write_csv(results_harmonized, file.path("model_validity_results", 
-                                               "random_forest",
-                                               "2017_2021",
-                                               "rf_obs_vs_pred_2017_2021_harmonized.csv"))
+# # List files 
+# files_to_harmonize <- list.files(path = file.path("model_validity_results",
+#                                                   "random_forest",
+#                                                   "2017_2021"),
+#                                  pattern = "obs_vs_pred_next_", full.names = T)
+# 
+# results_harmonized <- files_to_harmonize %>%
+#   # Read in files as CSVs
+#   purrr::map(read.csv) %>%
+#   # Combine them together
+#   purrr::reduce(dplyr::left_join, by = c("training_years", "variables", "station_name")) %>%
+#   # Create new column to indicate model type
+#   dplyr::mutate(model_name = "rf", .before = training_years)
+# 
+# # Export to CSV
+# readr::write_csv(results_harmonized, file.path("model_validity_results", 
+#                                                "random_forest",
+#                                                "2017_2021",
+#                                                "rf_obs_vs_pred_2017_2021_harmonized.csv"))

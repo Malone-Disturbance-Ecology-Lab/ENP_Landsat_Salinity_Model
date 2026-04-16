@@ -21,6 +21,7 @@ dir.create(path = file.path("model_validity_results"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest", "2016_2020"), showWarnings = F)
 dir.create(path = file.path("model_validity_results", "random_forest", "2017_2021"), showWarnings = F)
+dir.create(path = file.path("model_validity_results", "random_forest", "2013_2020"), showWarnings = F)
 
 DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>% 
   # Remove missing values
@@ -33,11 +34,11 @@ DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format
 ## --------------------------------------------------------------- ##
 
 set.seed(77)
-start_year <- 2017
-my_interval <- 5
+start_year <- 2013
+my_interval <- 8
 
 # Specify the next years to compare our future predictions to
-next_years <- 5
+next_years <- 3
 
 # Get unique combinations of stations where order doesn't matter
 grid <- expand.grid(unique(DBSAL$station), unique(DBSAL$station))
@@ -48,7 +49,7 @@ unique_pairs <- grid[!duplicated(t(apply(grid, 1, sort))), ] %>%
   dplyr::rename(station1 = Var1) %>%
   dplyr::rename(station2 = Var2) %>%
   # Create new column to store our R-squared values
-  dplyr::mutate(pearsons_sq_next_5_years = NA) %>%
+  dplyr::mutate(pearsons_sq_next_3_years = NA) %>%
   # Convert columns to character type
   dplyr::mutate(station1 = as.character(station1),
                 station2 = as.character(station2)) %>%
@@ -73,10 +74,10 @@ for (i in 1:nrow(unique_pairs)){
     dplyr::select(station, formatted_date, salinity)
   
   if(nrow(station_sub1) == 0){
-    unique_pairs[i,]$pearsons_sq_next_5_years <- NA
+    unique_pairs[i,]$pearsons_sq_next_3_years <- NA
     next
   } else if (nrow(station_sub2) == 0){
-    unique_pairs[i,]$pearsons_sq_next_5_years <- NA
+    unique_pairs[i,]$pearsons_sq_next_3_years <- NA
     next
   } else {
     
@@ -84,7 +85,7 @@ for (i in 1:nrow(unique_pairs)){
     common_dates <- intersect(as.character(station_sub1$formatted_date), as.character(station_sub2$formatted_date))
     
     if (length(common_dates) == 0){
-      unique_pairs[i,]$pearsons_sq_next_5_years <- NA
+      unique_pairs[i,]$pearsons_sq_next_3_years <- NA
       next
     }
     
@@ -116,7 +117,7 @@ for (i in 1:nrow(unique_pairs)){
     
     # One way to get R-squared
     model <- lm(station_sub1_v2$mean_daily_sal ~ station_sub2_v2$mean_daily_sal)
-    unique_pairs[i,]$pearsons_sq_next_5_years <- summary(model)$r.squared
+    unique_pairs[i,]$pearsons_sq_next_3_years <- summary(model)$r.squared
   }
 }
 
@@ -136,9 +137,9 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
 
 DBSAL_v2 <- DBSAL %>%
   # Filter out cloudy days
-  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) %>%
-  # Grab only continuous values
-  dplyr::filter(grab == 0)
+  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+  # # Grab only continuous values
+  # dplyr::filter(grab == 0)
 
 # Subset to interval
 DBSAL_some_years <- DBSAL_v2 %>%
@@ -151,9 +152,10 @@ test_some_years <- DBSAL_some_years[-sample1,]
 
 # Random forest modeling
 # Picked variables based on VSURF results
-# 2016: distCoast+slope+B03+srad+CRSI+SI+NDSI+B06+tavg
-# 2017: distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg
-rf_model <- randomForest(salinity ~  distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg,
+# 2016 - 2020: distCoast+slope+B03+srad+CRSI+SI+NDSI+B06+tavg
+# 2017 - 2021: distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg
+# 2013 - 2020: distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg
+rf_model <- randomForest(salinity ~ distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg,
                          data = train_some_years,
                          importance = TRUE)
 
@@ -161,7 +163,7 @@ rf_model <- randomForest(salinity ~  distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B
 my_pred <- predict(rf_model, newdata = test_some_years)
 mse <- mean((my_pred - test_some_years$salinity)^2)
 r_squared <- 1 - sum((test_some_years$salinity - my_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
-# 0.75  
+# 0.76  
 
 # Predict for next X years
 DBSAL_next_years <- DBSAL %>%
@@ -170,7 +172,7 @@ DBSAL_next_years <- DBSAL %>%
 my_pred2 <- predict(rf_model, newdata = DBSAL_next_years)
 mse2 <- mean((my_pred2 - DBSAL_next_years$salinity)^2)
 r_squared2 <- 1 - sum((DBSAL_next_years$salinity - my_pred2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
-# 0.54  
+# 0.59  
 
 # Add a new column for predicted values
 DBSAL_next_years_v2 <- DBSAL_next_years %>%
@@ -185,7 +187,7 @@ unique_pairs2 <- grid2[!duplicated(t(apply(grid2, 1, sort))), ] %>%
   dplyr::rename(station1 = Var1) %>%
   dplyr::rename(station2 = Var2) %>%
   # Create new column to store our R-squared values
-  dplyr::mutate(pearsons_sq_next_5_years = NA) %>%
+  dplyr::mutate(pearsons_sq_next_3_years = NA) %>%
   # Convert columns to character type
   dplyr::mutate(station1 = as.character(station1),
                 station2 = as.character(station2)) %>%
@@ -210,10 +212,10 @@ for (i in 1:nrow(unique_pairs2)){
     dplyr::select(station, formatted_date, pred)
   
   if(nrow(station_sub1) == 0){
-    unique_pairs2[i,]$pearsons_sq_next_5_years <- NA
+    unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
     next
   } else if (nrow(station_sub2) == 0){
-    unique_pairs2[i,]$pearsons_sq_next_5_years <- NA
+    unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
     next
   } else {
     
@@ -221,7 +223,7 @@ for (i in 1:nrow(unique_pairs2)){
     common_dates <- intersect(as.character(station_sub1$formatted_date), as.character(station_sub2$formatted_date))
     
     if (length(common_dates) == 0){
-      unique_pairs2[i,]$pearsons_sq_next_5_years <- NA
+      unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
       next
     }
     
@@ -253,7 +255,7 @@ for (i in 1:nrow(unique_pairs2)){
     
     # One way to get R-squared
     model <- lm(station_sub1_v2$mean_daily_sal ~ station_sub2_v2$mean_daily_sal)
-    unique_pairs2[i,]$pearsons_sq_next_5_years <- summary(model)$r.squared
+    unique_pairs2[i,]$pearsons_sq_next_3_years <- summary(model)$r.squared
   }
 }
 
@@ -272,7 +274,7 @@ distance_station_pairs <- readr::read_csv("distance_station_pairs.csv")
 # List files 
 files_to_harmonize <- list.files(path = file.path("model_validity_results",
                                                   "random_forest",
-                                                  "2016_2020"),
+                                                  "2013_2020"),
                                  pattern = "station_pairs_rsquared", full.names = T)
 
 results_harmonized <- files_to_harmonize %>%
@@ -284,7 +286,7 @@ results_harmonized <- files_to_harmonize %>%
   dplyr::mutate(model_name = "rf", .before = type) %>%
   # Pivot wider to reorganize
   tidyr::pivot_wider(names_from = type,
-                     values_from = pearsons_sq_next_5_years) %>%
+                     values_from = pearsons_sq_next_3_years) %>%
   # Rename pivoted columns
   dplyr::rename(rsq_for_obs_station_pairs = obs) %>%
   dplyr::rename(rsq_for_pred_station_pairs = pred) %>%
@@ -301,5 +303,5 @@ results_harmonized <- files_to_harmonize %>%
 # Export to CSV
 readr::write_csv(results_harmonized, file.path("model_validity_results", 
                                           "random_forest",
-                                          "2016_2020",
-                                          "rf_station_pairs_2016_2020_harmonized.csv"))
+                                          "2013_2020",
+                                          "rf_station_pairs_2013_2020_harmonized.csv"))
