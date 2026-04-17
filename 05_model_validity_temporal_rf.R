@@ -33,9 +33,9 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 
-DBSAL_v2 <- DBSAL %>%
-  # Filter out cloudy days
-  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+DBSAL_v2 <- DBSAL #%>%
+  # # Filter out cloudy days
+  # dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
   # # Grab only continuous values
   # dplyr::filter(grab == 0)
 
@@ -63,8 +63,9 @@ test_some_years <- DBSAL_some_years[-sample1,]
 # Picked variables based on VSURF results
 # 2016 - 2020: distCoast+slope+B03+srad+CRSI+SI+NDSI+B06+tavg
 # 2017 - 2021: distCoast+slope+B03+srad+CRSI+SI+NDSI+NLI+B06+tavg
-# 2013 - 2020: distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg
-rf_model <- randomForest(salinity ~ distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg,
+# 2013 - 2020 with grab samples: distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B07+tavg
+# 2013 - 2020 with grab and cloudy rows: distCoast+slope+srad+B03+SI+tavg
+rf_model <- randomForest(salinity ~ distCoast+slope+srad+B03+SI+tavg,
                          data = train_some_years,
                          importance = TRUE)
 
@@ -72,7 +73,7 @@ rf_model <- randomForest(salinity ~ distCoast+slope+B03+srad+SI+CRSI+NDSI+B06+B0
 my_pred <- predict(rf_model, newdata = test_some_years)
 mse <- mean((my_pred - test_some_years$salinity)^2)
 r_squared <- 1 - sum((test_some_years$salinity - my_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
-# 0.76
+# 0.73
 
 # Predict for next X years
 DBSAL_next_years <- DBSAL %>%
@@ -81,7 +82,7 @@ DBSAL_next_years <- DBSAL %>%
 my_pred2 <- predict(rf_model, newdata = DBSAL_next_years)
 mse2 <- mean((my_pred2 - DBSAL_next_years$salinity)^2)
 r_squared2 <- 1 - sum((DBSAL_next_years$salinity - my_pred2)^2) / sum((DBSAL_next_years$salinity - mean(DBSAL_next_years$salinity))^2)
-# 0.59 
+# 0.67 
 
 # Add a new column for predicted values
 DBSAL_next_years_v2 <- DBSAL_next_years %>%
@@ -134,7 +135,7 @@ results <- data.frame(training_years = paste0(start_year, "-", start_year+my_int
 readr::write_csv(results, file.path("model_validity_results", 
                                     "random_forest",
                                  paste0(start_year, "_", start_year+my_interval-1),
-                                 paste0("obs_vs_pred_next_",next_years,"_years.csv")))
+                                 paste0("obs_vs_pred_next_",next_years,"_years_cloudy.csv")))
 
 ## --------------------------------------------- ##
 #                 Harmonizing -----

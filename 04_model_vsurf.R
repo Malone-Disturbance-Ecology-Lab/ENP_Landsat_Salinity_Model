@@ -33,9 +33,9 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 
-DBSAL_v2 <- DBSAL %>%
-  # Filter out cloudy days
-  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+DBSAL_v2 <- DBSAL #%>%
+  # # Filter out cloudy days
+  # dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
   # # Grab only continuous values
   # dplyr::filter(grab == 0)
 
@@ -130,6 +130,6 @@ for (i in start_years) {
   
   # Export as CSV
   readr::write_csv(result,
-                   file.path(paste0("vsurf_", my_interval, "_years_results"), paste0("vsurf_", selected_interval, ".csv")))
+                   file.path(paste0("vsurf_", my_interval, "_years_results"), paste0("vsurf_", selected_interval, "_cloudy.csv")))
 }
 
