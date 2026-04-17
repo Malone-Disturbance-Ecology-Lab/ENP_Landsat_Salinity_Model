@@ -49,7 +49,7 @@ unique_pairs <- grid[!duplicated(t(apply(grid, 1, sort))), ] %>%
   dplyr::rename(station1 = Var1) %>%
   dplyr::rename(station2 = Var2) %>%
   # Create new column to store our R-squared values
-  dplyr::mutate(pearsons_sq_next_3_years = NA) %>%
+  dplyr::mutate(pearsons_sq = NA) %>%
   # Convert columns to character type
   dplyr::mutate(station1 = as.character(station1),
                 station2 = as.character(station2)) %>%
@@ -74,10 +74,10 @@ for (i in 1:nrow(unique_pairs)){
     dplyr::select(station, formatted_date, salinity)
   
   if(nrow(station_sub1) == 0){
-    unique_pairs[i,]$pearsons_sq_next_3_years <- NA
+    unique_pairs[i,]$pearsons_sq <- NA
     next
   } else if (nrow(station_sub2) == 0){
-    unique_pairs[i,]$pearsons_sq_next_3_years <- NA
+    unique_pairs[i,]$pearsons_sq <- NA
     next
   } else {
     
@@ -85,7 +85,7 @@ for (i in 1:nrow(unique_pairs)){
     common_dates <- intersect(as.character(station_sub1$formatted_date), as.character(station_sub2$formatted_date))
     
     if (length(common_dates) == 0){
-      unique_pairs[i,]$pearsons_sq_next_3_years <- NA
+      unique_pairs[i,]$pearsons_sq <- NA
       next
     }
     
@@ -117,9 +117,12 @@ for (i in 1:nrow(unique_pairs)){
     
     # One way to get R-squared
     model <- lm(station_sub1_v2$mean_daily_sal ~ station_sub2_v2$mean_daily_sal)
-    unique_pairs[i,]$pearsons_sq_next_3_years <- summary(model)$r.squared
+    unique_pairs[i,]$pearsons_sq <- summary(model)$r.squared
   }
 }
+
+unique_pairs <- unique_pairs %>%
+  dplyr::mutate(next_n_years = next_years)
 
 # Export to CSV
 readr::write_csv(unique_pairs, file.path("model_validity_results", 
@@ -188,7 +191,7 @@ unique_pairs2 <- grid2[!duplicated(t(apply(grid2, 1, sort))), ] %>%
   dplyr::rename(station1 = Var1) %>%
   dplyr::rename(station2 = Var2) %>%
   # Create new column to store our R-squared values
-  dplyr::mutate(pearsons_sq_next_3_years = NA) %>%
+  dplyr::mutate(pearsons_sq = NA) %>%
   # Convert columns to character type
   dplyr::mutate(station1 = as.character(station1),
                 station2 = as.character(station2)) %>%
@@ -213,10 +216,10 @@ for (i in 1:nrow(unique_pairs2)){
     dplyr::select(station, formatted_date, pred)
   
   if(nrow(station_sub1) == 0){
-    unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
+    unique_pairs2[i,]$pearsons_sq <- NA
     next
   } else if (nrow(station_sub2) == 0){
-    unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
+    unique_pairs2[i,]$pearsons_sq <- NA
     next
   } else {
     
@@ -224,7 +227,7 @@ for (i in 1:nrow(unique_pairs2)){
     common_dates <- intersect(as.character(station_sub1$formatted_date), as.character(station_sub2$formatted_date))
     
     if (length(common_dates) == 0){
-      unique_pairs2[i,]$pearsons_sq_next_3_years <- NA
+      unique_pairs2[i,]$pearsons_sq <- NA
       next
     }
     
@@ -256,9 +259,12 @@ for (i in 1:nrow(unique_pairs2)){
     
     # One way to get R-squared
     model <- lm(station_sub1_v2$mean_daily_sal ~ station_sub2_v2$mean_daily_sal)
-    unique_pairs2[i,]$pearsons_sq_next_3_years <- summary(model)$r.squared
+    unique_pairs2[i,]$pearsons_sq <- summary(model)$r.squared
   }
 }
+
+unique_pairs2 <- unique_pairs2 %>%
+  dplyr::mutate(next_n_years = next_years)
 
 # Export to CSV
 readr::write_csv(unique_pairs2, file.path("model_validity_results", 
@@ -270,13 +276,22 @@ readr::write_csv(unique_pairs2, file.path("model_validity_results",
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
+start_year <- 2013
+my_interval <- 8
+
+selected_interval <- paste0(start_year, "_", start_year+my_interval-1)
+
+next_years <- 3
+
 distance_station_pairs <- readr::read_csv("distance_station_pairs.csv")
 
-path <- file.path("model_validity_results", "random_forest", "2013_2020")
+path <- file.path("model_validity_results", "random_forest", selected_interval)
 
 # List files 
-files_to_harmonize <- c(paste0(file.path(path, "obs_station_pairs_rsquared_2013_2020_next_3.csv")),
-                        paste0(file.path(path, "pred_station_pairs_rsquared_2013_2020_next_3_cloudy.csv")))
+files_to_harmonize <- c(file.path(path, paste0("obs_station_pairs_rsquared_", selected_interval, "_next_", next_years, ".csv")),
+                       (file.path(path, paste0("pred_station_pairs_rsquared_", selected_interval, "_next_", next_years, "_cloudy.csv"))))
+
+files_to_harmonize
 
 results_harmonized <- files_to_harmonize %>%
   # Read in files as CSVs
@@ -287,7 +302,7 @@ results_harmonized <- files_to_harmonize %>%
   dplyr::mutate(model_name = "rf", .before = type) %>%
   # Pivot wider to reorganize
   tidyr::pivot_wider(names_from = type,
-                     values_from = pearsons_sq_next_3_years) %>%
+                     values_from = pearsons_sq) %>%
   # Rename pivoted columns
   dplyr::rename(rsq_for_obs_station_pairs = obs) %>%
   dplyr::rename(rsq_for_pred_station_pairs = pred) %>%
@@ -304,5 +319,5 @@ results_harmonized <- files_to_harmonize %>%
 # Export to CSV
 readr::write_csv(results_harmonized, file.path("model_validity_results", 
                                           "random_forest",
-                                          "2013_2020",
-                                          "rf_station_pairs_2013_2020_harmonized_cloudy.csv"))
+                                          selected_interval,
+                                          paste0("rf_station_pairs_", selected_interval, "_next_", next_years, "_harmonized_cloudy.csv")))
