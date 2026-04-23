@@ -13,18 +13,14 @@
 library(sf)
 library(tidyverse)
 
-DBSAL <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>% 
-  # Remove missing values
-  na.omit() %>%
-  # Remove infinite values
-  filter(!if_any(everything(), is.infinite)) 
+DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
 
 ## --------------------------------------------- ##
 #           Calculating Distance -----
 ## --------------------------------------------- ##
 
 # Get unique combinations of stations where order doesn't matter
-grid <- expand.grid(unique(DBSAL$station), unique(DBSAL$station))
+grid <- expand.grid(unique(DBSAL_orig$station), unique(DBSAL_orig$station))
 station_pairs <- grid[!duplicated(t(apply(grid, 1, sort))), ] %>%
   # Remove rows with the same station twice
   dplyr::filter(Var1 != Var2) %>%
