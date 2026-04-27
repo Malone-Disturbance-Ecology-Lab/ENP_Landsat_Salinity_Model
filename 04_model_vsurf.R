@@ -22,6 +22,8 @@ library(parallel)
 dir.create(path = file.path("vsurf_4_years_results"), showWarnings = F)
 dir.create(path = file.path("vsurf_5_years_results"), showWarnings = F)
 dir.create(path = file.path("vsurf_8_years_results"), showWarnings = F)
+dir.create(path = file.path("vsurf_6_years_results"), showWarnings = F)
+
 
 DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>% 
   # Remove missing values
@@ -33,9 +35,9 @@ Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 
-DBSAL_v2 <- DBSAL #%>%
-  # # Filter out cloudy days
-  # dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
+DBSAL_v2 <- DBSAL %>%
+  # Filter out cloudy days
+  dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) #%>%
   # # Grab only continuous values
   # dplyr::filter(grab == 0)
 
@@ -46,8 +48,8 @@ DBSAL_v2 <- DBSAL #%>%
 set.seed(77)
 
 #start_years <- c(2014, 2015, 2016, 2017)
-start_years <- c(2013)
-my_interval <- 8
+start_years <- c(2017)
+my_interval <- 6
 
 for (i in start_years) {
   
@@ -130,6 +132,6 @@ for (i in start_years) {
   
   # Export as CSV
   readr::write_csv(result,
-                   file.path(paste0("vsurf_", my_interval, "_years_results"), paste0("vsurf_", selected_interval, "_cloudy.csv")))
+                   file.path(paste0("vsurf_", my_interval, "_years_results"), paste0("vsurf_", selected_interval, "_grab.csv")))
 }
 
