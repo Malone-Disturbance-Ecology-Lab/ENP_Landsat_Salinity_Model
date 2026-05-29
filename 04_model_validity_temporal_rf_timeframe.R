@@ -21,15 +21,15 @@ library(caret)
 dir.create(path = file.path("model_validity_results_timeframe"), showWarnings = F)
 dir.create(path = file.path("model_validity_results_timeframe", "random_forest"), showWarnings = F)
 
-DBSAL_orig <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
 
 DBSAL <- DBSAL_orig %>% 
   # Remove missing values
   na.omit() %>%
   # Remove infinite values
-  filter(!if_any(everything(), is.infinite)) 
+  dplyr::filter(!if_any(everything(), is.infinite)) 
 
-Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
+Fmask_lookup <- readr::read_csv("HLSL30-020-Fmask-lookup.csv") %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 
@@ -37,6 +37,8 @@ DBSAL_v2 <- DBSAL %>%
   # Filter out cloudy days
   dplyr::filter(!(Fmask %in% Fmask_lookup$Value)) 
 
+# Create a version of the data with filled out band values
+# (Landsat and Sentinel values taken from the nearest previous day)
 DBSAL_filled <- DBSAL_orig %>%
   dplyr::arrange(formatted_date) %>%
   dplyr::group_by(station) %>%
@@ -88,8 +90,9 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Remove missing values
     na.omit() %>%
     # Remove infinite values
-    filter(!if_any(everything(), is.infinite)) 
+    dplyr::filter(!if_any(everything(), is.infinite)) 
   
+  # Calculate coefficient of determination for all stations altogether
   my_pred2 <- predict(rf_model, newdata = DBSAL_end_year)
   mse2 <- mean((my_pred2 - DBSAL_end_year$salinity)^2)
   r_squared2 <- 1 - sum((DBSAL_end_year$salinity - my_pred2)^2) / sum((DBSAL_end_year$salinity - mean(DBSAL_end_year$salinity))^2)
@@ -104,8 +107,10 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   stations <- list()
   n_rows_list <- list()
   
+  # For each station...
   for (i in seq_along(unique(DBSAL_end_year_v2$station))){
     
+    # Save station name
     stations[[i]] <- unique(DBSAL_end_year_v2$station)[i]
     
     message(paste("station:", unique(DBSAL_end_year_v2$station)[i]))
@@ -114,6 +119,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
       # Filter to one station
       dplyr::filter(station == unique(DBSAL_end_year_v2$station)[i]) 
     
+    # Save number of rows for that station
     n_rows_list[[i]] <- nrow(station_sub) 
     
     # Grab Pearson's correlation squared
@@ -138,6 +144,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                         pearsons_sq = round(unlist(r_sq1_list), digits = 4),
                         coeff_det = round(unlist(r_sq2_list), digits = 4))
   
+  # Add an additional row to save results for all stations altogether
   results <- results %>%
     dplyr::add_row(interval_length = interval,
                    training_years = paste0(start_year, "_", start_year+interval-1),
@@ -152,22 +159,41 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   
 }
 
-my_years <- 2013
+# Set the range of years we're interested in
+# For example, setting my_years <- 2013:2025 will cover every timeframe
+# from 2013-2025, 2014-2025, 2015-2025, ..., 2025-2025
+
+# Therefore, the best way to cover every possible timeframe is to run like so:
+# my_years <- 2013:2025
+# my_years <- 2013:2024
+# my_years <- 2013:2023
+# ...
+# my_years <- 2013:2014
+# my_years <- 2013
+
+my_years <- 2013:2025
+# Set target year to be the last year in the timeframe
 my_target <- my_years[length(my_years)]
 
+# For every year in the timeframe range...
 for (i in my_years){
   message("on: ", i)
+  
+  # Set it as the start year
   my_start_year <- i
+  # Set the target as the last year in the timeframe
   target <- my_target
+  # Calculate the interval length from start year to last year
   my_interval <- target+1-my_start_year
   
-  df <- calc_timeframe(start_year = my_start_year, 
-                       interval = my_interval, 
-                       training_data = DBSAL_v2, 
+  # Run modelling function for this specified timeframe
+  df <- calc_timeframe(start_year = my_start_year,
+                       interval = my_interval,
+                       training_data = DBSAL_v2,
                        filled_data = DBSAL_filled)
   
   # Export to CSV
-  readr::write_csv(df, file.path("model_validity_results_timeframe", 
+  readr::write_csv(df, file.path("model_validity_results_timeframe",
                                  "random_forest",
                                  paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, ".csv")))
   
@@ -189,16 +215,23 @@ results_harmonized <- files_to_harmonize %>%
   purrr::map(read.csv) %>%
   # Combine them together
   purrr::list_rbind(x = .) %>%
+  # Drop Pearson's correlation squared
   dplyr::select(-pearsons_sq) %>%
+  # Round numbers
   dplyr::mutate(coeff_det = round(coeff_det, digits = 4)) %>%
   # Remove infinite values
   dplyr::filter(!if_any(everything(), is.infinite)) 
 
 
 results_harmonized_v2 <- results_harmonized %>%
+  # Group by prediction year and station
   dplyr::group_by(pred_year, station_name) %>%
+  # Get the average R^2
   dplyr::summarize(avg_coeff_det = mean(coeff_det)) %>%
+  # Round numbers
   dplyr::mutate(avg_coeff_det = round(avg_coeff_det, digits = 4)) %>%
+  # Denote "good" R^2 values as > 0.5
+  # otherwise "bad" R^2 value as <= 0.5
   dplyr::mutate(does_well = case_when(
     avg_coeff_det > 0.5 ~ 1,
     avg_coeff_det <= 0.5 ~ 0,
@@ -206,5 +239,8 @@ results_harmonized_v2 <- results_harmonized %>%
   ))
 
 results_harmonized_v3 <- results_harmonized_v2 %>%
+  # Group by station
   dplyr::group_by(station_name) %>%
+  # Find how many years did model predict well for each station
+  # (Max number is 13 since there are 13 prediction years from 2013-2025)
   dplyr::summarize(count_does_well = sum(does_well))
