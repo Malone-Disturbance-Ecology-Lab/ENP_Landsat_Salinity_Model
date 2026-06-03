@@ -19,6 +19,7 @@ library(randomForest)
 # Create new folders to store results
 dir.create(path = file.path("model_validity_results_timeframe"), showWarnings = F)
 dir.create(path = file.path("model_validity_results_timeframe", "random_forest"), showWarnings = F)
+dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest"), showWarnings = F)
 
 DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
 
@@ -98,12 +99,14 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   
   # Add a new column for predicted values
   DBSAL_end_year_v2 <- DBSAL_end_year %>%
-    dplyr::mutate(pred = my_pred)
+    dplyr::mutate(pred = my_pred,
+                  diff = salinity - my_pred)
   
   # Create lists to store our results
   r_sq_list <- list()
   stations <- list()
   n_rows_list <- list()
+  avg_diff_list <- list()
   
   # For each station...
   for (i in seq_along(unique(DBSAL_end_year_v2$station))){
@@ -120,6 +123,8 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Save number of rows for that station
     n_rows_list[[i]] <- nrow(station_sub) 
     
+    avg_diff_list[[i]] <- mean(station_sub$diff)
+    
     # Calculate coefficient of determination
     station_r_sq <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
     r_sq_list[[i]] <- station_r_sq
@@ -134,7 +139,8 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                         variables = paste(rownames(rf_model$importance), collapse = ", "),
                         station_name = unlist(stations),
                         n_rows = unlist(n_rows_list),
-                        coeff_det = round(unlist(r_sq_list), digits = 4))
+                        coeff_det = round(unlist(r_sq_list), digits = 4),
+                        avg_diff = unlist(avg_diff_list))
   
   # Add an additional row to save results for all stations altogether
   results <- results %>%
@@ -144,7 +150,8 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                    variables = paste(rownames(rf_model$importance), collapse = ", "),
                    station_name = "all",
                    n_rows = nrow(DBSAL_end_year_v2),
-                   coeff_det = r_squared)
+                   coeff_det = r_squared,
+                   avg_diff = mean(DBSAL_end_year_v2$diff))
   
   return(results)
   
@@ -162,7 +169,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
 # my_years <- 2013:2014
 # my_years <- 2013
 
-my_years <- 2013:2025
+my_years <- 2013
 # Set target year to be the last year in the timeframe
 my_target <- my_years[length(my_years)]
 
@@ -184,7 +191,7 @@ for (i in my_years){
                        filled_data = DBSAL_filled)
   
   # Export to CSV
-  readr::write_csv(df, file.path("model_validity_results_timeframe",
+  readr::write_csv(df, file.path("model_validity_results_timeframe_diff",
                                  "random_forest",
                                  paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, ".csv")))
   
