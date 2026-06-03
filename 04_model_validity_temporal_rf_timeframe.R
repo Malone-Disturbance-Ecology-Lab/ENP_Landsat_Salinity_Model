@@ -15,7 +15,6 @@
 
 library(tidyverse)
 library(randomForest)
-library(caret)
 
 # Create new folders to store results
 dir.create(path = file.path("model_validity_results_timeframe"), showWarnings = F)
@@ -80,9 +79,9 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                            importance = TRUE)
   
   # Sanity check
-  my_pred <- predict(rf_model, newdata = test_some_years)
-  mse <- mean((my_pred - test_some_years$salinity)^2)
-  r_squared <- 1 - sum((test_some_years$salinity - my_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
+  #sanity_check_pred <- predict(rf_model, newdata = test_some_years)
+  #sanity_check_mse <- mean((sanity_check_pred - test_some_years$salinity)^2)
+  #sanity_check_r_squared <- 1 - sum((test_some_years$salinity - sanity_check_pred)^2) / sum((test_some_years$salinity - mean(test_some_years$salinity))^2)
   
   # Predict for the last year in the interval
   DBSAL_end_year <- filled_data %>%
@@ -93,17 +92,16 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     dplyr::filter(!if_any(everything(), is.infinite)) 
   
   # Calculate coefficient of determination for all stations altogether
-  my_pred2 <- predict(rf_model, newdata = DBSAL_end_year)
-  mse2 <- mean((my_pred2 - DBSAL_end_year$salinity)^2)
-  r_squared2 <- 1 - sum((DBSAL_end_year$salinity - my_pred2)^2) / sum((DBSAL_end_year$salinity - mean(DBSAL_end_year$salinity))^2)
+  my_pred <- predict(rf_model, newdata = DBSAL_end_year)
+  #my_mse <- mean((my_pred - DBSAL_end_year$salinity)^2)
+  r_squared <- 1 - sum((DBSAL_end_year$salinity - my_pred)^2) / sum((DBSAL_end_year$salinity - mean(DBSAL_end_year$salinity))^2)
   
   # Add a new column for predicted values
   DBSAL_end_year_v2 <- DBSAL_end_year %>%
-    dplyr::mutate(pred = my_pred2)
+    dplyr::mutate(pred = my_pred)
   
   # Create lists to store our results
-  r_sq1_list <- list()
-  r_sq2_list <- list()
+  r_sq_list <- list()
   stations <- list()
   n_rows_list <- list()
   
@@ -122,15 +120,10 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Save number of rows for that station
     n_rows_list[[i]] <- nrow(station_sub) 
     
-    # Grab Pearson's correlation squared
-    r_sq1 <- caret::postResample(obs = station_sub$salinity, pred = station_sub$pred)
-    r_sq1_list[[i]] <- r_sq1[2]
-    message(paste("r_sq1:", r_sq1[2]))
-    
     # Calculate coefficient of determination
-    r_sq2 <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
-    r_sq2_list[[i]] <- r_sq2
-    message(paste("r_sq2:", r_sq2))
+    station_r_sq <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
+    r_sq_list[[i]] <- station_r_sq
+    message(paste("station_r_sq:", station_r_sq))
     
   }
   
@@ -141,8 +134,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                         variables = paste(rownames(rf_model$importance), collapse = ", "),
                         station_name = unlist(stations),
                         n_rows = unlist(n_rows_list),
-                        pearsons_sq = round(unlist(r_sq1_list), digits = 4),
-                        coeff_det = round(unlist(r_sq2_list), digits = 4))
+                        coeff_det = round(unlist(r_sq_list), digits = 4))
   
   # Add an additional row to save results for all stations altogether
   results <- results %>%
@@ -152,8 +144,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                    variables = paste(rownames(rf_model$importance), collapse = ", "),
                    station_name = "all",
                    n_rows = nrow(DBSAL_end_year_v2),
-                   pearsons_sq = caret::postResample(obs = DBSAL_end_year_v2$salinity, pred = DBSAL_end_year_v2$pred)[2],
-                   coeff_det = r_squared2)
+                   coeff_det = r_squared)
   
   return(results)
   
@@ -215,8 +206,6 @@ results_harmonized <- files_to_harmonize %>%
   purrr::map(read.csv) %>%
   # Combine them together
   purrr::list_rbind(x = .) %>%
-  # Drop Pearson's correlation squared
-  dplyr::select(-pearsons_sq) %>%
   # Round numbers
   dplyr::mutate(coeff_det = round(coeff_det, digits = 4)) %>%
   # Remove infinite values
