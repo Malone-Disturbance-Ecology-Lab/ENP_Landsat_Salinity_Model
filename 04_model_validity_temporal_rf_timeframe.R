@@ -99,8 +99,9 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   #my_mse <- mean((my_pred - DBSAL_end_year$salinity)^2)
   r_squared <- 1 - sum((DBSAL_end_year$salinity - my_pred)^2) / sum((DBSAL_end_year$salinity - mean(DBSAL_end_year$salinity))^2)
   
-  # Add a new column for predicted values
   DBSAL_end_year_v2 <- DBSAL_end_year %>%
+    # Add a new column for predicted values
+    # Add a new column for the difference between actual value and prediction
     dplyr::mutate(pred = my_pred,
                   diff = salinity - my_pred)
   
@@ -109,6 +110,12 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   stations <- list()
   n_rows_list <- list()
   avg_diff_list <- list()
+  min_sal_list <- list()
+  mean_sal_list <- list()
+  max_sal_list <- list()
+  min_pred_list <- list()
+  mean_pred_list <- list()
+  max_pred_list <- list()
   
   # For each station...
   for (i in seq_along(unique(DBSAL_end_year_v2$station))){
@@ -120,12 +127,23 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     
     station_sub <- DBSAL_end_year_v2 %>%
       # Filter to one station
-      dplyr::filter(station == unique(DBSAL_end_year_v2$station)[i]) 
+      dplyr::filter(station == unique(DBSAL_end_year_v2$station)[i])
     
     # Save number of rows for that station
     n_rows_list[[i]] <- nrow(station_sub) 
     
+    # Find average difference
     avg_diff_list[[i]] <- mean(station_sub$diff)
+    
+    # Find min, mean, max salinity
+    min_sal_list[[i]] <- min(station_sub$salinity)
+    mean_sal_list[[i]] <- mean(station_sub$salinity)
+    max_sal_list[[i]] <- max(station_sub$salinity)
+    
+    # Find min, mean, max prediction
+    min_pred_list[[i]] <- min(station_sub$pred)
+    mean_pred_list[[i]] <- mean(station_sub$pred)
+    max_pred_list[[i]] <- max(station_sub$pred)    
     
     # Calculate coefficient of determination
     station_r_sq <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
@@ -142,7 +160,13 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                         station_name = unlist(stations),
                         n_rows = unlist(n_rows_list),
                         coeff_det = round(unlist(r_sq_list), digits = 4),
-                        avg_diff = unlist(avg_diff_list))
+                        avg_diff = round(unlist(avg_diff_list), digits = 2),
+                        min_sal = unlist(min_sal_list),
+                        mean_sal = round(unlist(mean_sal_list), digits = 2),
+                        max_sal = unlist(max_sal_list),
+                        min_pred = round(unlist(min_pred_list), digits = 2),
+                        mean_pred = round(unlist(mean_pred_list), digits = 2),
+                        max_pred = round(unlist(max_pred_list), digits = 2))
   
   # Add an additional row to save results for all stations altogether
   results <- results %>%
@@ -152,8 +176,14 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                    variables = paste(rownames(rf_model$importance), collapse = ", "),
                    station_name = "all",
                    n_rows = nrow(DBSAL_end_year_v2),
-                   coeff_det = r_squared,
-                   avg_diff = mean(DBSAL_end_year_v2$diff))
+                   coeff_det = round(r_squared, digits = 4),
+                   avg_diff = round(mean(DBSAL_end_year_v2$diff), digits = 2),
+                   min_sal = min(DBSAL_end_year_v2$salinity),
+                   mean_sal = round(mean(DBSAL_end_year_v2$salinity), digits = 2),
+                   max_sal = max(DBSAL_end_year_v2$salinity),
+                   min_pred = round(min(DBSAL_end_year_v2$pred), digits = 2),
+                   mean_pred = round(mean(DBSAL_end_year_v2$pred), digits = 2),
+                   max_pred = round(max(DBSAL_end_year_v2$pred), digits = 2))
   
   return(results)
   
