@@ -84,7 +84,7 @@ for (a_var in vars){
 
 good_stations <- c("2290930", "ENPCW", "ENPLO", "SEVENPALM", "TAYLORUPS",
                    "ENPWP", "TAYLORS3", "TROUT CR_B", "FLAB37", "JOEBAY2E",
-                   "MCCORMICK", "MUD_CRKM", "ENPTC", "ENPTR", "FLAB29",
+                   "MCCORMICK", "MUD_CRKM", "ENPTC", "ENPTR", "FLAB43",
                    "HIGHWAY_CR", "TTI57", "ENPGI", "FLAB30", "FLAB44",
                    "TTI51B")
 
