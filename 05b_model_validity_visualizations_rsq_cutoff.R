@@ -21,6 +21,8 @@ dir.create(path = file.path("model_validity_visualizations"), showWarnings = F)
 dir.create(path = file.path("model_validity_visualizations", "cutoff_0.5"), showWarnings = F)
 dir.create(path = file.path("model_validity_visualizations", "cutoff_0.33"), showWarnings = F)
 
+results_0.33 <- read_csv("results_0.33_cutoff.csv")
+
 DBSAL_orig <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>%
   # Removing outliers to see general patterns more easily
   # Removing 4 outlier points where salinity had values of 3400, 1380, 157
@@ -55,6 +57,7 @@ DBSAL_filled <- DBSAL_orig %>%
 check_0.5 <- DBSAL_filled %>%
   # Select relevant variables
   dplyr::select(station, formatted_date, grab, salinity, distCoast, slope, B03, srad, CRSI, SI, NDSI, B06, NLI, tavg) %>%
+  dplyr::filter(station %in% unique(results_0.33$station_name)) %>%
   # Denote "good" stations with a "1", "bad" stations with a "0"
   dplyr::mutate(good = dplyr::case_when(
     station == "SEVENPALM" | station == "ENPWP" | station == "TAYLORS3" | station == "ENPCW" | station == "FLAB44" ~ 1,
@@ -91,6 +94,7 @@ good_stations <- c("2290930", "ENPCW", "ENPLO", "SEVENPALM", "TAYLORUPS",
 check_0.33 <- DBSAL_filled %>%
   # Select relevant variables
   dplyr::select(station, formatted_date, grab, salinity, distCoast, slope, B03, srad, CRSI, SI, NDSI, B06, NLI, tavg) %>%
+  dplyr::filter(station %in% unique(results_0.33$station_name)) %>%
   # Denote "good" stations with a "1", "bad" stations with a "0"
   dplyr::mutate(good = dplyr::case_when(
     station %in% good_stations ~ 1,
