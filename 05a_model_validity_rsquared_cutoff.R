@@ -125,3 +125,5 @@ results_0.33_cutoff <- results_harmonized %>%
 
 # More stations getting labelled as consistently "good"
 # 21 stations where count_does_well >= 3
+
+write_csv(results_0.33_cutoff, "results_0.33_cutoff.csv")
