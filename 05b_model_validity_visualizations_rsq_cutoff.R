@@ -12,8 +12,6 @@
 ## --------------------------------------------- ##
 
 library(tidyverse)
-library(randomForest)
-library(caret)
 library(rlang)
 
 # Create new folders to store results
@@ -85,11 +83,10 @@ for (a_var in vars){
 
 # Create plots when the R^2 cutoff to be considered "good" is 0.33 ---------
 
-good_stations <- c("2290930", "ENPCW", "ENPLO", "SEVENPALM", "TAYLORUPS",
-                   "ENPWP", "TAYLORS3", "TROUT CR_B", "FLAB37", "JOEBAY2E",
-                   "MCCORMICK", "MUD_CRKM", "ENPTC", "ENPTR", "FLAB43",
-                   "HIGHWAY_CR", "TTI57", "ENPGI", "FLAB30", "FLAB44",
-                   "TTI51B")
+good_stations <- results_0.33 %>%
+  dplyr::filter(count_does_well >= 3) %>%
+  dplyr::filter(station_name != "all") %>%
+  dplyr::pull(station_name)
 
 check_0.33 <- DBSAL_filled %>%
   # Select relevant variables
