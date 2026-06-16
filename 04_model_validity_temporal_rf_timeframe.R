@@ -18,10 +18,12 @@ library(randomForest)
 
 # Create new folders to store results
 dir.create(path = file.path("model_validity_results_timeframe"), showWarnings = F)
-# Folder for first attempt
-dir.create(path = file.path("model_validity_results_timeframe", "random_forest"), showWarnings = F)
-# Folder for second attempt that included calculating difference betw actual values and predictions
+# Folder that includes calculating difference betw actual values and predictions
 dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest"), showWarnings = F)
+# Folder that includes full results (specific predictions) and summary results
+dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "full_results"), showWarnings = F)
+dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results"), showWarnings = F)
+
 
 DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
 
@@ -105,7 +107,24 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     dplyr::mutate(pred = my_pred,
                   diff = salinity - my_pred)
   
-  # Create lists to store our results
+  full_results <- DBSAL_end_year_v2 %>%
+    # Bin the actual salinity values to save in our full results
+    dplyr::mutate(salinity_bin = dplyr::case_when(
+      salinity >= 0 & salinity <= 5 ~ "0 to 5",
+      salinity > 5 & salinity <= 10 ~ "05 to 10",
+      salinity > 10 & salinity <= 15 ~ "10 to 15",
+      salinity > 15 & salinity <= 20 ~ "15 to 20",
+      salinity > 20 & salinity <= 25 ~ "20 to 25",
+      salinity > 25 & salinity <= 30 ~ "25 to 30",
+      salinity > 30 & salinity <= 35 ~ "30 to 35",
+      salinity > 35 & salinity <= 40 ~ "35 to 40",
+      salinity > 40 & salinity <= 45 ~ "40 to 45",
+      salinity > 45 & salinity <= 50 ~ "45 to 50",
+      salinity > 50 ~ "50 and above"
+    ), .after = salinity) %>%
+    dplyr::mutate(salinity_bin = as.factor(salinity_bin))
+  
+  # Create lists to store our summary results
   r_sq_list <- list()
   stations <- list()
   n_rows_list <- list()
@@ -118,16 +137,16 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   max_pred_list <- list()
   
   # For each station...
-  for (i in seq_along(unique(DBSAL_end_year_v2$station))){
+  for (i in seq_along(unique(full_results$station))){
     
     # Save station name
-    stations[[i]] <- unique(DBSAL_end_year_v2$station)[i]
+    stations[[i]] <- unique(full_results$station)[i]
     
-    message(paste("station:", unique(DBSAL_end_year_v2$station)[i]))
+    message(paste("station:", unique(full_results$station)[i]))
     
-    station_sub <- DBSAL_end_year_v2 %>%
+    station_sub <- full_results %>%
       # Filter to one station
-      dplyr::filter(station == unique(DBSAL_end_year_v2$station)[i])
+      dplyr::filter(station == unique(full_results$station)[i])
     
     # Save number of rows for that station
     n_rows_list[[i]] <- nrow(station_sub) 
@@ -152,8 +171,8 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     
   }
   
-  # Save results in data frame
-  results <- data.frame(interval_length = interval,
+  # Save summary results in data frame
+  summary_results <- data.frame(interval_length = interval,
                         training_years = paste0(start_year, "-", start_year+interval-1),
                         pred_year = paste0(start_year+interval-1),
                         variables = paste(rownames(rf_model$importance), collapse = ", "),
@@ -169,23 +188,25 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
                         max_pred = round(unlist(max_pred_list), digits = 2))
   
   # Add an additional row to save results for all stations altogether
-  results <- results %>%
+  summary_results <- summary_results %>%
     dplyr::add_row(interval_length = interval,
                    training_years = paste0(start_year, "_", start_year+interval-1),
                    pred_year = paste0(start_year+interval-1),
                    variables = paste(rownames(rf_model$importance), collapse = ", "),
                    station_name = "all",
-                   n_rows = nrow(DBSAL_end_year_v2),
+                   n_rows = nrow(full_results),
                    coeff_det = round(r_squared, digits = 4),
-                   avg_diff = round(mean(DBSAL_end_year_v2$diff), digits = 2),
-                   min_sal = min(DBSAL_end_year_v2$salinity),
-                   mean_sal = round(mean(DBSAL_end_year_v2$salinity), digits = 2),
-                   max_sal = max(DBSAL_end_year_v2$salinity),
-                   min_pred = round(min(DBSAL_end_year_v2$pred), digits = 2),
-                   mean_pred = round(mean(DBSAL_end_year_v2$pred), digits = 2),
-                   max_pred = round(max(DBSAL_end_year_v2$pred), digits = 2))
+                   avg_diff = round(mean(full_results$diff), digits = 2),
+                   min_sal = min(full_results$salinity),
+                   mean_sal = round(mean(full_results$salinity), digits = 2),
+                   max_sal = max(full_results$salinity),
+                   min_pred = round(min(full_results$pred), digits = 2),
+                   mean_pred = round(mean(full_results$pred), digits = 2),
+                   max_pred = round(max(full_results$pred), digits = 2))
   
-  return(results)
+  # Return our full and summary results
+  return(list(full = full_results,
+              summary = summary_results))
   
 }
 
@@ -201,7 +222,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
 # my_years <- 2013:2014
 # my_years <- 2013
 
-my_years <- 2013
+my_years <- 2013:2025
 # Set target year to be the last year in the timeframe
 my_target <- my_years[length(my_years)]
 
@@ -222,10 +243,17 @@ for (i in my_years){
                        training_data = DBSAL_v2,
                        filled_data = DBSAL_filled)
   
-  # Export to CSV
-  readr::write_csv(df, file.path("model_validity_results_timeframe_diff",
+  # Export the full results that has the specific predictions
+  readr::write_csv(df$full, file.path("model_validity_results_timeframe_diff",
+                                                "random_forest",
+                                                "full_results",
+                                                paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
+  
+  # Export the summary results by station
+  readr::write_csv(df$summary, file.path("model_validity_results_timeframe_diff",
                                  "random_forest",
-                                 paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, ".csv")))
+                                 "summary_results",
+                                 paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
   
 }
 
@@ -233,7 +261,7 @@ for (i in my_years){
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
-path <- file.path("model_validity_results_timeframe", "random_forest")
+path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize <- list.files(path, pattern = "obs_vs_pred_", full.names = T)
@@ -249,3 +277,4 @@ results_harmonized <- files_to_harmonize %>%
   dplyr::mutate(coeff_det = round(coeff_det, digits = 4)) %>%
   # Remove infinite values
   dplyr::filter(!if_any(everything(), is.infinite)) 
+
