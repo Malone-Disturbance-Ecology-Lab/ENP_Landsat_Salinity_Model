@@ -19,7 +19,7 @@ library(randomForest)
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
-path <- file.path("model_validity_results_timeframe_diff", "random_forest")
+path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize <- list.files(path, pattern = "obs_vs_pred_", full.names = T)
