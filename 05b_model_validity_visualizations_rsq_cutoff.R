@@ -84,7 +84,7 @@ for (a_var in vars){
 # Create plots when the R^2 cutoff to be considered "good" is 0.33 ---------
 
 good_stations <- results_0.33 %>%
-  dplyr::filter(count_does_well >= 3) %>%
+  dplyr::filter(count_does_well >= 5) %>%
   dplyr::filter(station_name != "all") %>%
   dplyr::pull(station_name)
 
