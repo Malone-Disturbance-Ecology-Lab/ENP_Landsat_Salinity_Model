@@ -17,7 +17,7 @@ library(tidyverse)
 library(randomForest)
 
 # Create new folders to store results
-dir.create(path = file.path("model_validity_results_timeframe"), showWarnings = F)
+dir.create(path = file.path("model_validity_results_timeframe_diff"), showWarnings = F)
 # Folder that includes calculating difference betw actual values and predictions
 dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest"), showWarnings = F)
 # Folder that includes full results (specific predictions) and summary results
