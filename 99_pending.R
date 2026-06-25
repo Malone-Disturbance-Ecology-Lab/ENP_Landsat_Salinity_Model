@@ -272,7 +272,10 @@ full_results_harmonized_v2 <- full_results_harmonized %>%
   dplyr::filter(salinity < 150) %>%
   dplyr::select(formatted_date, station, salinity, pred) %>%
   dplyr::mutate(formatted_date = as.Date(formatted_date)) %>%
-  na.omit() 
+  na.omit() %>%
+  dplyr::group_by(formatted_date, station, salinity) %>%
+  dplyr::summarize(avg_daily_pred = mean(pred)) %>%
+  ungroup()
 
 
 years <- 2013:2025
@@ -284,12 +287,12 @@ for (i in years){
   
   p <- ggplot() +
     geom_line(aes(x = formatted_date, y = salinity, group = 1),color = "darkgreen", data=full_results_harmonized_v3) +
-    geom_line(aes(x = formatted_date, y = pred, group = 2), color = "darkred",data=full_results_harmonized_v3) +
+    geom_line(aes(x = formatted_date, y = avg_daily_pred, group = 2), color = "darkred",data=full_results_harmonized_v3) +
     facet_wrap(~station) +
     theme(axis.text.x = element_text(angle = 45, size = 6)) +
-    labs(title = paste("salinity (green) vs. prediction (red),", start_year))
+    labs(title = paste("salinity (green) vs. avg daily prediction (red),", start_year))
   
-  ggsave(file.path("model_validity_visualizations", "99_pending", "sal_vs_pred", paste0("sal_vs_pred_", start_year, ".png")), p, height = 12, width = 18)
+  ggsave(file.path("model_validity_visualizations", "99_pending", "sal_vs_pred", paste0("sal_vs_avgpred_", start_year, ".png")), p, height = 12, width = 18)
 }
 
 ## --------------------------------------------- ##
