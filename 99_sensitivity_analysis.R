@@ -22,9 +22,14 @@ dir.create(path = file.path("sensitivity_analysis", "random_forest"), showWarnin
 # Folders that includes full results (specific predictions) and summary results
 dir.create(path = file.path("sensitivity_analysis", "random_forest", "full_results"), showWarnings = F)
 dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results"), showWarnings = F)
+
 # Variable-specific folders
-dir.create(path = file.path("sensitivity_analysis", "random_forest", "full_results", "B03"), showWarnings = F)
-dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results", "B03"), showWarnings = F)
+vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
+
+for (a_var in vars){
+  dir.create(path = file.path("sensitivity_analysis", "random_forest", "full_results", a_var), showWarnings = F)
+  dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results", a_var), showWarnings = F)
+}
 
 non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
   dplyr::filter(grab == 0) %>%
@@ -157,7 +162,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Save station name
     stations[[i]] <- unique(full_results$station)[i]
     
-    message(paste("station:", unique(full_results$station)[i]))
+    #message(paste("station:", unique(full_results$station)[i]))
     
     station_sub <- full_results %>%
       # Filter to one station
@@ -182,7 +187,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Calculate coefficient of determination
     station_r_sq <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
     r_sq_list[[i]] <- station_r_sq
-    message(paste("station_r_sq:", station_r_sq))
+    #message(paste("station_r_sq:", station_r_sq))
     
   }
   
@@ -230,120 +235,124 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
 ## --------------------------------------------- ##
 
 # Set the range of years we're interested in
-# For example, setting my_years <- 2013:2025 will cover every timeframe
-# from 2013-2025, 2014-2025, 2015-2025, ..., 2025-2025
+# For example, setting my_years_series <- list(2013:2025) will train the model on 
+# the training years 2013-2025, then 2014-2025, then 2015-2025, ..., and finally 2025-2025
 
-# Therefore, the best way to cover every possible timeframe is to run like so:
-# my_years <- 2013:2025
-# my_years <- 2013:2024
-# my_years <- 2013:2023
-# ...
-# my_years <- 2013:2014
-# my_years <- 2013
+# Therefore, the best way to cover every possible timeframe range is to run like so:
+# my_years_series <- list(2013:2025, 2013:2024, 2013:2023, 2013:2022, 2013:2021,
+#                         2013:2020, 2013:2019, 2013:2018, 2013:2017, 2013:2016, 
+#                         2013:2015, 2013:2014, 2013)
 
-# Then run every possible timeframe for each variable of interest
+# Then run every possible timeframe range for each variable of interest
 
 # CHANGE AS NEEDED ----------------------------
-my_years <- 2013:2025
+
+my_years_series <- list(2013:2025)
+#my_years_series <- list(2013:2024, 2013:2023, 2013:2022, 2013:2021)
+#my_years_series <- list(2013:2020, 2013:2019, 2013:2018, 2013:2017)
+#my_years_series <- list(2013:2016, 2013:2015, 2013:2014, 2013)
 
 # Set variable of interest (we let this vary)
-my_var <- "B03"
+my_var <- "distCoast"
 # ---------------------------------------------
 
-# Set target year to be the last year in the timeframe
-my_target <- my_years[length(my_years)]
-
-# List all model variables
-all_vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
-
-# List variables we hold constant
-const_vars <- setdiff(all_vars, my_var)
-
-# List percentile levels
-all_levels <- c("low", "med", "high")
-
-# For every year in the timeframe range...
-for (i in my_years){
-  message("on: ", i)
+# For every range in the series...
+for (my_years in my_years_series){
+  # Set target year to be the last year in the timeframe
+  my_target <- my_years[length(my_years)]
+  message("target: ", my_target)
   
-  # Set it as the start year
-  my_start_year <- i
-
-  # Calculate the interval length from start year to last year
-  my_interval <- my_target+1-my_start_year
+  # List all model variables
+  all_vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
   
-  # For every level...
-  for (j in all_levels){
+  # List variables we hold constant
+  const_vars <- setdiff(all_vars, my_var)
+  
+  # List percentile levels
+  all_levels <- c("low", "med", "high")
+  
+  # For every year in the timeframe range...
+  for (i in my_years){
+    message("on: ", i)
     
-    if (j == "low"){
-      # Set low percentile
-      my_percentile <- 0.2
+    # Set it as the start year
+    my_start_year <- i
+    
+    # Calculate the interval length from start year to last year
+    my_interval <- my_target+1-my_start_year
+    
+    # For every level...
+    for (j in all_levels){
       
-      # Create a fake dataframe with variables constant at that low percentile
-      fake_data <- DBSAL_filled_v2 %>% 
-        dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+      if (j == "low"){
+        # Set low percentile
+        my_percentile <- 0.2
+        
+        # Create a fake dataframe with variables constant at that low percentile
+        fake_data <- DBSAL_filled_v2 %>% 
+          dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+        
+      } else if (j == "med"){
+        # Set median percentile
+        my_percentile <- 0.5
+        
+        # Create a fake dataframe with variables constant at that median percentile
+        fake_data <- DBSAL_filled_v2 %>% 
+          dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+        
+      } else if (j == "high"){
+        # Set high percentile
+        my_percentile <- 0.8
+        
+        # Create a fake dataframe with variables constant at that high percentile
+        fake_data <- DBSAL_filled_v2 %>% 
+          dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
+                        !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+      }
       
-    } else if (j == "med"){
-      # Set median percentile
-      my_percentile <- 0.5
+      # Run modelling function for this specified timeframe
+      df <- calc_timeframe(start_year = my_start_year,
+                           interval = my_interval,
+                           training_data = DBSAL_v2,
+                           filled_data = fake_data)
       
-      # Create a fake dataframe with variables constant at that median percentile
-      fake_data <- DBSAL_filled_v2 %>% 
-        dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+      # Export the full results that has the specific predictions
+      readr::write_csv(df$full, file.path("sensitivity_analysis",
+                                          "random_forest",
+                                          "full_results",
+                                          my_var,
+                                          paste0(my_var, "_", j, "_obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
       
-    } else if (j == "high"){
-      # Set high percentile
-      my_percentile <- 0.8
-      
-      # Create a fake dataframe with variables constant at that high percentile
-      fake_data <- DBSAL_filled_v2 %>% 
-        dplyr::mutate(!!sym(const_vars[1]) := quantile(!!sym(const_vars[1]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[2]) := quantile(!!sym(const_vars[2]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[3]) := quantile(!!sym(const_vars[3]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[4]) := quantile(!!sym(const_vars[4]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[5]) := quantile(!!sym(const_vars[5]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[6]) := quantile(!!sym(const_vars[6]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[7]) := quantile(!!sym(const_vars[7]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[8]) := quantile(!!sym(const_vars[8]), my_percentile, na.rm = T)[[1]],
-                      !!sym(const_vars[9]) := quantile(!!sym(const_vars[9]), my_percentile, na.rm = T)[[1]])
+      # Export the summary results by station
+      readr::write_csv(df$summary, file.path("sensitivity_analysis",
+                                             "random_forest",
+                                             "summary_results",
+                                             my_var,
+                                             paste0(my_var, "_", j, "_obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
     }
-    
-    # Run modelling function for this specified timeframe
-    df <- calc_timeframe(start_year = my_start_year,
-                         interval = my_interval,
-                         training_data = DBSAL_v2,
-                         filled_data = fake_data)
-    
-    # Export the full results that has the specific predictions
-    readr::write_csv(df$full, file.path("sensitivity_analysis",
-                                        "random_forest",
-                                        "full_results",
-                                        my_var,
-                                        paste0(my_var, "_", j, "_obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
-    
-    # Export the summary results by station
-    readr::write_csv(df$summary, file.path("sensitivity_analysis",
-                                           "random_forest",
-                                           "summary_results",
-                                           my_var,
-                                           paste0(my_var, "_", j, "_obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
   }
 }
-
 
