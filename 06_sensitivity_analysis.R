@@ -31,6 +31,7 @@ for (a_var in vars){
   dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results", a_var), showWarnings = F)
 }
 
+# Find the non-grab stations
 non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
   dplyr::filter(grab == 0) %>%
   dplyr::pull(station)
