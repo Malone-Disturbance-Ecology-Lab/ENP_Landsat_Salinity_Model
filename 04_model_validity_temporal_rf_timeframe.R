@@ -60,12 +60,12 @@ DBSAL_filled <- DBSAL_orig %>%
                 NDSI = (B05 - B06) / (B05 + B06)) 
 
 ## --------------------------------------------- ##
-#                 Modeling -----
+#             Modeling Function -----
 ## --------------------------------------------- ##
 
-set.seed(77)
-
 calc_timeframe <- function(start_year, interval, training_data, filled_data){
+  
+  set.seed(77)
   
   # Subset to interval
   DBSAL_some_years <- training_data %>%
@@ -75,6 +75,8 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   sample1 <- sample(1:nrow(DBSAL_some_years), 0.8*nrow(DBSAL_some_years)) 
   train_some_years <- DBSAL_some_years[sample1,] 
   test_some_years <- DBSAL_some_years[-sample1,]
+  
+  set.seed(77)
   
   # Random forest modeling
   # Picked variables based on VSURF results
@@ -142,7 +144,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Save station name
     stations[[i]] <- unique(full_results$station)[i]
     
-    message(paste("station:", unique(full_results$station)[i]))
+    #message(paste("station:", unique(full_results$station)[i]))
     
     station_sub <- full_results %>%
       # Filter to one station
@@ -167,7 +169,7 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
     # Calculate coefficient of determination
     station_r_sq <- 1 - sum((station_sub$salinity - station_sub$pred)^2) / sum((station_sub$salinity - mean(station_sub$salinity))^2)
     r_sq_list[[i]] <- station_r_sq
-    message(paste("station_r_sq:", station_r_sq))
+    #message(paste("station_r_sq:", station_r_sq))
     
   }
   
@@ -210,51 +212,63 @@ calc_timeframe <- function(start_year, interval, training_data, filled_data){
   
 }
 
+## --------------------------------------------- ##
+#                 Execution -----
+## --------------------------------------------- ##
+
 # Set the range of years we're interested in
-# For example, setting my_years <- 2013:2025 will cover every timeframe
-# from 2013-2025, 2014-2025, 2015-2025, ..., 2025-2025
+# For example, setting my_years_series <- list(2013:2025) will train the model on 
+# the training years 2013-2025, then 2014-2025, then 2015-2025, ..., and finally 2025-2025
 
-# Therefore, the best way to cover every possible timeframe is to run like so:
-# my_years <- 2013:2025
-# my_years <- 2013:2024
-# my_years <- 2013:2023
-# ...
-# my_years <- 2013:2014
-# my_years <- 2013
+# Therefore, the best way to cover every possible timeframe range is to run like so:
+# my_years_series <- list(2013:2025, 2013:2024, 2013:2023, 2013:2022, 2013:2021,
+#                         2013:2020, 2013:2019, 2013:2018, 2013:2017, 2013:2016, 
+#                         2013:2015, 2013:2014, 2013)
 
-my_years <- 2013:2025
-# Set target year to be the last year in the timeframe
-my_target <- my_years[length(my_years)]
+# CHANGE AS NEEDED ----------------------------
 
-# For every year in the timeframe range...
-for (i in my_years){
-  message("on: ", i)
+my_years_series <- list(2013:2025)
+#my_years_series <- list(2013:2024, 2013:2023, 2013:2022, 2013:2021)
+#my_years_series <- list(2013:2020, 2013:2019, 2013:2018, 2013:2017)
+#my_years_series <- list(2013:2016, 2013:2015, 2013:2014, 2013)
+
+# ---------------------------------------------
+
+# For every range in the series...
+for (my_years in my_years_series){
+  # Set target year to be the last year in the timeframe
+  my_target <- my_years[length(my_years)]
+  message("target: ", my_target)
   
-  # Set it as the start year
-  my_start_year <- i
-  # Set the target as the last year in the timeframe
-  target <- my_target
-  # Calculate the interval length from start year to last year
-  my_interval <- target+1-my_start_year
-  
-  # Run modelling function for this specified timeframe
-  df <- calc_timeframe(start_year = my_start_year,
-                       interval = my_interval,
-                       training_data = DBSAL_v2,
-                       filled_data = DBSAL_filled)
-  
-  # Export the full results that has the specific predictions
-  readr::write_csv(df$full, file.path("model_validity_results_timeframe_diff",
-                                                "random_forest",
-                                                "full_results",
-                                                paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
-  
-  # Export the summary results by station
-  readr::write_csv(df$summary, file.path("model_validity_results_timeframe_diff",
-                                 "random_forest",
-                                 "summary_results",
-                                 paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
-  
+  # For every year in the timeframe range...
+  for (i in my_years){
+    message("on: ", i)
+    
+    # Set it as the start year
+    my_start_year <- i
+    
+    # Calculate the interval length from start year to last year
+    my_interval <- my_target+1-my_start_year
+    
+    # Run modelling function for this specified timeframe
+    df <- calc_timeframe(start_year = my_start_year,
+                         interval = my_interval,
+                         training_data = DBSAL_v2,
+                         filled_data = DBSAL_filled)
+    
+    # Export the full results that has the specific predictions
+    readr::write_csv(df$full, file.path("model_validity_results_timeframe_diff",
+                                        "random_forest",
+                                        "full_results",
+                                        paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
+    
+    # Export the summary results by station
+    readr::write_csv(df$summary, file.path("model_validity_results_timeframe_diff",
+                                           "random_forest",
+                                           "summary_results",
+                                           paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
+    
+  }
 }
 
 ## --------------------------------------------- ##
