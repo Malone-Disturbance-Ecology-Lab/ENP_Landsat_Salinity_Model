@@ -30,9 +30,12 @@ dir.create(path = file.path("model_validity_visualizations", "explore", "model_v
 #         Looking at Map of Stations -----
 ## --------------------------------------------- ##
 
+# Point to the folder with the ENP shapefile
+shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
+
 DBHydro_sf <- sf::st_read(file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
 
-ENP <- sf::st_read(file.path("Everglades_NP_4326", "Everglades_NP_4326.shp"))
+ENP <- sf::st_read(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 results_0.33 <- read_csv("results_0.33_cutoff.csv")
 

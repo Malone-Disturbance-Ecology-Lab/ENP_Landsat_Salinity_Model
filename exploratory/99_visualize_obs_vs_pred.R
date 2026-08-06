@@ -14,9 +14,12 @@ library(tidyverse)
 library(ggrepel)
 library(sf)
 
+# Point to the folder with the ENP shapefile
+shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
+
 rf_obs_vs_pred <- read_csv(file.path("model_validity_results", "random_forest", "2016_2020", "rf_obs_vs_pred_2016_2020_harmonized.csv"))
 
-ENP <- sf::st_read(file.path("Everglades_NP_4326", "Everglades_NP_4326.shp"))
+ENP <- sf::st_read(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 DBHydro_lonlat <- read_csv("DBHydro_lonlat.csv") %>%
   dplyr::select(-grab) %>%
