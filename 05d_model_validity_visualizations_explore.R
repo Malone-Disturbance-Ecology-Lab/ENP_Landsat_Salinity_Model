@@ -1,10 +1,15 @@
-## --------------------------------------------- ##
-#          Model Validity: Scratch
-## --------------------------------------------- ##
+## ------------------------------------------------------- ##
+#  Model Validity: Visualizations for Exploring Good/Bad 
+## ------------------------------------------------------- ##
 # Script author(s): Angel Chen
 
 # Purpose:
-## This script is my "scratch paper" for preliminary analyses.
+## This script plots:
+## - A map of good stations
+## - Salinity bins
+## - Average predictions vs prediction year, colored by good or bad stations
+## - Good vs. bad, years and stations
+## - Salinity vs. average daily prediction for all prediction years
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
@@ -16,10 +21,10 @@ library(sf)
 
 # Create new folders to store results
 dir.create(path = file.path("model_validity_visualizations"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "99_pending"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "99_pending", "sal_vs_pred"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "99_pending", "diff_sal_bins"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "99_pending", "model_variables_by_year"), showWarnings = F)
+dir.create(path = file.path("model_validity_visualizations", "explore"), showWarnings = F)
+dir.create(path = file.path("model_validity_visualizations", "explore", "sal_vs_pred"), showWarnings = F)
+dir.create(path = file.path("model_validity_visualizations", "explore", "diff_sal_bins"), showWarnings = F)
+dir.create(path = file.path("model_validity_visualizations", "explore", "model_variables_by_year"), showWarnings = F)
 
 ## --------------------------------------------- ##
 #         Looking at Map of Stations -----
@@ -90,7 +95,7 @@ p <- ggplot() +
   facet_wrap(~salinity_bin) +
   coord_cartesian(xlim = c(-35, 35))
 
-ggsave(file.path("model_validity_visualizations", "99_pending", "diff_sal_bins", paste0("diff_sal_bins_all_years.png")), 
+ggsave(file.path("model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_all_years.png")), 
        p, height = 6, width = 8)
 
 # ggplot() +
@@ -107,7 +112,7 @@ for (i in my_years){
     facet_wrap(~salinity_bin) +
     labs(title = paste("Difference betw. salinity and prediction, faceted by salinity bins,", i))
   
-  ggsave(file.path("model_validity_visualizations", "99_pending", "diff_sal_bins", paste0("diff_sal_bins_", i, ".png")), 
+  ggsave(file.path("model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_", i, ".png")), 
          p, height = 6, width = 8)
 }
 
@@ -164,7 +169,7 @@ p <- ggplot(aes(x = pred_year, y = avg_pred, group = 1, color = good_or_bad), da
   theme(axis.text.x = element_text(angle = 45, size = 8)) +
   labs(title = "Average predictions vs. prediction years, colored by good or bad stations")
 
-ggsave(file.path("model_validity_visualizations", "99_pending", paste0("pred_vs_pred_year.png")), 
+ggsave(file.path("model_validity_visualizations", "explore", paste0("pred_vs_pred_year.png")), 
        p, height = 16, width = 20)
 
 summary_results_harmonized_v2 <- summary_results_harmonized %>%
@@ -292,7 +297,7 @@ for (i in years){
     theme(axis.text.x = element_text(angle = 45, size = 6)) +
     labs(title = paste("salinity (green) vs. avg daily prediction (red),", start_year))
   
-  ggsave(file.path("model_validity_visualizations", "99_pending", "sal_vs_pred", paste0("sal_vs_avgpred_", start_year, ".png")), p, height = 12, width = 18)
+  ggsave(file.path("model_validity_visualizations", "explore", "sal_vs_pred", paste0("sal_vs_avgpred_", start_year, ".png")), p, height = 12, width = 18)
 }
 
 ## --------------------------------------------- ##
@@ -338,5 +343,5 @@ for (i in years){
 #     theme(axis.text.x = element_text(angle = 45, size = 6))
 #   
 #   # Save plot
-#   ggsave(file.path("model_validity_visualizations", "99_pending", "model_variables_by_year", paste0(a_year), paste0(a_var, "_", a_year, "_plot.png")), p, height = 12, width = 18)
+#   ggsave(file.path("model_validity_visualizations", "explore", "model_variables_by_year", paste0(a_year), paste0(a_var, "_", a_year, "_plot.png")), p, height = 12, width = 18)
 # }
