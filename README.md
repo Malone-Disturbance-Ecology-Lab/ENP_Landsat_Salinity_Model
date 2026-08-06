@@ -28,4 +28,11 @@ A Landsat version of https://github.com/Malone-Disturbance-Ecology-Lab/ENP_Salin
 
 - **05c_model_validity_visualizations_check_pred.R**: This script checks if my predictions are over or underestimating and plots the difference between predicted & actual salinity value.
 
+- **05d_model_validity_visualizations_explore.R**: This script plots:
+  - A map of good stations
+  - Salinity bins
+  - Average predictions vs prediction year, colored by good or bad stations
+  - Good vs. bad, years and stations
+  - Salinity vs. average daily prediction for all prediction years
+
 - **06_sensitivity_analysis.R**: This script is for performing sensitivity analysis on our model. It investigates how the model predicts when all other variables are held constant (aside from our variable of interest).
