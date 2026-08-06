@@ -96,3 +96,8 @@ appeears::rs_request(
 )
 
 # Check your email for a link to download the requested AppEEARS files manually
+
+# Instructions on how to organize downloaded data:
+# Make sure your folder is named "appeears_landsat_data"
+# Then have 2 folders inside "appeears_landsat_data", 1 for each data product, "L30" and "S30"
+# Then have folders inside "L30" and "S30", a folder for each individual band like "B01", "B02", etc

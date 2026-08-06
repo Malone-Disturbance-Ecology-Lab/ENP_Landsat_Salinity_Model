@@ -62,6 +62,10 @@ sort(unique(DBHydro_continuous$STATION))
 # https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=63708,39208,39209,39212,39215,AN690,38066,38067,66106,66107,66112,66113,66125,66126,90464&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
 # https://insightsdata.sfwmd.gov/#/shared-reports?timeseriesIds=38010,38012,38011,66108,66109,66115,66117,66128,66129,38019,38021,38020,38023,38094,66110,66111,66123,66124,66130,66131&reportType=timeseries&format=csv&startDate=20130401&endDate=20260213&module=continuous
 
+# Instructions on how to organize downloaded data:
+# Make sure your folder is named "dbhydro_salinity"
+# Then have a "cont" folder inside with all the continuous data
+
 ## --------------------------------------------- ##
 #            Download grab data -----
 ## --------------------------------------------- ##
@@ -79,3 +83,7 @@ sort(unique(DBHydro_continuous$STATION))
 
 # Sadly no direct download links
 # Go to https://insightsdata.sfwmd.gov/#/waterquality to download the grab data manually
+
+# Instructions on how to organize downloaded data:
+# Make sure your folder is named "dbhydro_salinity"
+# Then have a "grab" folder inside with all the continuous data
