@@ -195,7 +195,7 @@ add_dates <- function(band_name, harmonized_band, type){
 
 # CHANGE AS NEEDED --------------------------------
 
-# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
+# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "Fmask"
 # Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12", "Fmask"
 # Harmonize as needed
 

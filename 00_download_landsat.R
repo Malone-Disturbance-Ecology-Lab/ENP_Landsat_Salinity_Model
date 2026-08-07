@@ -68,8 +68,8 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 # CHANGE AS NEEDED --------------------------------
 
 # Needed product IDs: "HLSL30.020", "HLSS30.020"
-# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
-# Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12"
+# Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "Fmask"
+# Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12", "Fmask"
 # Create AppEEARS requests as needed
 
 my_task <- "surf_reflect_S30_ENP_B12"
