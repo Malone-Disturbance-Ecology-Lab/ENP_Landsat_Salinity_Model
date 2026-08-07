@@ -102,3 +102,5 @@ for (i in 1:48){
   terra::writeRaster(changed_res, file.path(target_folder, paste0(target_name, num_1_name, "_", num_2_name, ".tif")), overwrite = T)
   
 }
+
+message("Export to cluster storage complete. If you want this file on the MaloneLab Server, please manually upload it there.")

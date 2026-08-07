@@ -73,3 +73,5 @@ distance.Coast.ENP <- terra::mask(distance.Coast, enp_v2)
 
 # Export
 terra::writeRaster(distance.Coast.ENP, file.path(my_folder, "ENP_DistCoast.tif"), overwrite = T)
+
+message("Export to cluster storage complete. If you want this file on the MaloneLab Server, please manually upload it there.")

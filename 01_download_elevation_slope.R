@@ -17,6 +17,14 @@ library(terra)
 library(sf)
 library(elevatr)
 
+# Export to server? 0 for no, 1 for yes
+export_server <- 0
+
+if (export_server == 1){
+  # Point to the Landsat Salinity Model folder
+  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+}
+
 # Point to the folder with the ENP shapefile
 shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
 
@@ -52,6 +60,10 @@ elevation <- terra::mask(ele_project, enp_v2)
 # Export elevation raster
 terra::writeRaster(elevation, file = "ENP_Elevation.tif", overwrite = T)
 
+if (export_server == 1){
+  terra::writeRaster(elevation, file = file.path(landsat_salinity_folder, "ENP_Elevation.tif"), overwrite = T)
+}
+
 ## --------------------------------------------- ##
 #                  Get Slope -----
 ## --------------------------------------------- ##
@@ -64,3 +76,7 @@ names(slope) <- "slope"
 
 # Export slope raster
 terra::writeRaster(slope, file = "ENP_Slope.tif", overwrite = T)
+
+if (export_server == 1){
+  terra::writeRaster(slope, file = file.path(landsat_salinity_folder, "ENP_Slope.tif"), overwrite = T)
+}

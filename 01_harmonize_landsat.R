@@ -14,6 +14,24 @@
 library(tidyverse)
 library(terra)
 
+# Export to server? 0 for no, 1 for yes
+export_server <- 0
+
+if (export_server == 1){
+  # Point to the Landsat Salinity Model folder
+  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  
+  # Create new folder to store rasters
+  dir.create(path = file.path(landsat_salinity_folder, "harmonized_appeears_landsat_data"), showWarnings = F)
+  
+  # Create new folder to store rasters
+  dir.create(path = file.path(landsat_salinity_folder, "harmonized_appeears_landsat_data", "L30"), showWarnings = F)
+  
+  # Create new folder to store rasters
+  dir.create(path = file.path(landsat_salinity_folder, "harmonized_appeears_landsat_data", "S30"), showWarnings = F)
+  
+}
+
 # Create new folder to store rasters
 dir.create(path = file.path("harmonized_appeears_landsat_data"), showWarnings = F)
 
@@ -22,9 +40,6 @@ dir.create(path = file.path("harmonized_appeears_landsat_data", "L30"), showWarn
 
 # Create new folder to store rasters
 dir.create(path = file.path("harmonized_appeears_landsat_data", "S30"), showWarnings = F)
-
-# # Create new folder to store rasters
-# dir.create(path = file.path("harmonized_appeears_landsat_data", "L30_S30"), showWarnings = F)
 
 ## --------------------------------------------- ##
 #                   Function:
@@ -162,6 +177,12 @@ add_dates <- function(band_name, harmonized_band, type){
   terra::writeRaster(harmonized_band, 
                      file.path("harmonized_appeears_landsat_data", type, paste0(type, "_ENP_", band_name, ".tif")),
                      overwrite = T)
+  
+  if (export_server == 1){
+    terra::writeRaster(harmonized_band, 
+                       file.path(landsat_salinity_folder, "harmonized_appeears_landsat_data", type, paste0(type, "_ENP_", band_name, ".tif")),
+                       overwrite = T)
+  }
 }
 
 ## --------------------------------------------- ##

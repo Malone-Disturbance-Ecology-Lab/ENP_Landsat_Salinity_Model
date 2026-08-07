@@ -18,6 +18,9 @@ library(terra)
 library(sf)
 library(tsibble)
 
+# Export to server? 0 for no, 1 for yes
+export_server <- 0
+
 # Point to the Landsat Salinity Model folder
 landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
 
@@ -362,3 +365,6 @@ DBSAL <- dplyr::full_join(sal_met_ele_slope_dist, landsat_sentinel_points, by = 
 # Export all salinity + extracted data as CSV
 readr::write_csv(DBSAL, "DBSAL.csv")
 
+if (export_server == 1){
+  readr::write_csv(DBSAL, file.path(landsat_salinity_folder, "DBSAL.csv"))
+}

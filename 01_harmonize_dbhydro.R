@@ -15,6 +15,18 @@
 library(tidyverse)
 library(sf)
 
+# Export to server? 0 for no, 1 for yes
+export_server <- 0
+
+if (export_server == 1){
+  # Point to the Landsat Salinity Model folder
+  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  
+  # Create new folder to store shapefile
+  dir.create(path = file.path(landsat_salinity_folder, "ENP_DBHydro_sf"), showWarnings = F)
+  
+}
+
 # Create new folder to store shapefile
 dir.create(path = file.path("ENP_DBHydro_sf"), showWarnings = F)
 
@@ -118,6 +130,10 @@ DBHydro_df <- dplyr::bind_rows(cont_v2, grab_v1)
 # Export combined cont and grab data as CSV
 readr::write_csv(DBHydro_df, "ENP_DBHydro_salinity_df.csv")
 
+if (export_server == 1){
+  readr::write_csv(DBHydro_df, file.path(landsat_salinity_folder, "ENP_DBHydro_salinity_df.csv"))
+}
+
 DBHydro_points_df <- DBHydro_df %>%
   # Select required columns
   dplyr::select(station, longitude, latitude, grab) %>% 
@@ -127,9 +143,17 @@ DBHydro_points_df <- DBHydro_df %>%
 # Export distinct station points as CSV
 readr::write_csv(DBHydro_points_df, "DBHydro_lonlat.csv")
 
+if (export_server == 1){
+  readr::write_csv(DBHydro_points_df, file.path(landsat_salinity_folder, "DBHydro_lonlat.csv"))
+}
+
 # Convert distinct station points to shapefile
 DBHydro_sf <- sf::st_as_sf(DBHydro_points_df, coords = c("longitude", "latitude"), crs = sf::st_crs(ENP))
 DBHydro_sf <- DBHydro_sf[sf::st_within(DBHydro_sf, ENP, sparse = FALSE), ]
 
 # Export distinct station points as shapefile
 sf::st_write(DBHydro_sf, file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"), append = FALSE)
+
+if (export_server == 1){
+  sf::st_write(DBHydro_sf, file.path(landsat_salinity_folder, "ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"), append = FALSE)
+}
