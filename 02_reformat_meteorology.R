@@ -18,11 +18,15 @@ library(terra)
 library(sf)
 library(climateR)
 
+# CHANGE AS NEEDED --------------------------------
+
 # Point to the Landsat Salinity folder on cluster
 my_folder <- '/home/ac3656/GitHub/ENP_Landsat_Salinity_Model'
 
 # Point to the project folder on cluster
 my_project <- '/nfs/roberts/project/pi_sm3466/ac3656'
+
+# -------------------------------------------------
 
 # Create new folders to store rasters
 dir.create(path = file.path(my_project, "ENP_Precipitation_Landsat_res"), showWarnings = F)

@@ -18,8 +18,12 @@ library(terra)
 library(sf)
 library(tsibble)
 
+# CHANGE AS NEEDED --------------------------------
+
 # Export to server? 0 for no, 1 for yes
 export_server <- 0
+
+# -------------------------------------------------
 
 # Point to the Landsat Salinity Model folder
 landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 

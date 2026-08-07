@@ -17,8 +17,12 @@ library(terra)
 library(sf)
 library(elevatr)
 
+# CHANGE AS NEEDED --------------------------------
+
 # Export to server? 0 for no, 1 for yes
 export_server <- 0
+
+# -------------------------------------------------
 
 if (export_server == 1){
   # Point to the Landsat Salinity Model folder

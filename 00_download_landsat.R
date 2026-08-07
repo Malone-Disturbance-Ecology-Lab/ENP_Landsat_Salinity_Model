@@ -16,8 +16,12 @@
 library(sf)
 library(appeears)
 
+# CHANGE AS NEEDED (also see towards bottom of script) ----
+
 # Specify your NASA Earth Data username 
 my_user <- "anchen14"
+
+# ---------------------------------------------------------
 
 # Enter your NASA Earth Data credentials 
 
@@ -61,6 +65,8 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 #           Create AppEEARS task -----
 ## --------------------------------------------- ##
 
+# CHANGE AS NEEDED --------------------------------
+
 # Needed product IDs: "HLSL30.020", "HLSS30.020"
 # Needed layers L30: "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B09", "B10", "B11", "Fmask"
 # Needed layers S30: "B01", "B02", "B03", "B04", "B8A", "B11", "B12"
@@ -68,14 +74,19 @@ enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 my_task <- "surf_reflect_S30_ENP_B12"
 my_layers <- "B12"
+my_start_date <- "2015-12-01"
+my_end_date <- "2026-02-13"
+my_product_ID <- "HLSS30.020"
+
+# -------------------------------------------------
 
 # Create a dataframe for your AppEEARS task
 df <- data.frame(
   task = my_task, # name of task
   subtask = "subtask", # name of subtask 
-  start = "2015-12-01", # start date for data
-  end = "2026-02-13", # end date for data
-  product = "HLSS30.020", # data product ID
+  start = my_start_date, # start date for data
+  end = my_end_date, # end date for data
+  product = my_product_ID, # data product ID
   layer = my_layers # name of specific band(s)
 )
 

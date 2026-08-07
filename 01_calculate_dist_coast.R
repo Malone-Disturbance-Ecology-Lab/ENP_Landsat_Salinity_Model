@@ -16,8 +16,12 @@ library(tidyverse)
 library(terra)
 library(sf)
 
+# CHANGE AS NEEDED --------------------------------
+
 # Point to the Landsat Salinity folder on cluster
 my_folder <- '/home/ac3656/GitHub/ENP_Landsat_Salinity_Model'
+
+# -------------------------------------------------
 
 # Read in FL coastline shapefile
 # Can also be found on file.path("/", "Volumes", "malonelab", "Research", "ENP_Salinity_Model", "florida_shoreline", "Florida_Shoreline_(1_to_12%2C000_Scale).shp") 

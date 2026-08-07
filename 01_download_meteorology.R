@@ -17,8 +17,16 @@ library(terra)
 library(sf)
 library(climateR)
 
+# CHANGE AS NEEDED --------------------------------
+
 # Point to the Landsat Salinity folder on cluster
 my_folder <- '/home/ac3656/GitHub/ENP_Landsat_Salinity_Model'
+
+# Specify start and end dates
+my_start_date <- "2013-04-01"
+my_end_date <- "2026-02-13"
+
+# -------------------------------------------------
 
 # Read in ENP shapefile
 # Can also be found on file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles", "Everglades_NP_4326.shp")
@@ -37,8 +45,8 @@ enp_v2 <- enp %>%
 
 # Grab meteorology data
 climate_rast <-  climateR::getGridMET(enp_v2, c("pr", "tmmn", "tmmx", "srad"),
-                                      startDate = "2013-04-01",
-                                      endDate = "2026-02-13")
+                                      startDate = my_start_date,
+                                      endDate = my_end_date)
 
 # Pick out the precip, shortwave radiation, and temp rasters
 precip_r <- climate_rast$precipitation_amount
