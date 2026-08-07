@@ -1,6 +1,8 @@
 # ENP_Landsat_Salinity_Model
 A Landsat version of https://github.com/Malone-Disturbance-Ecology-Lab/ENP_Salinity_Model
 
+IMPORTANT: Ctrl+F search for "CHANGE AS NEEDED" in each script to look for sections where you can change and customize your own user settings. 
+
 ## Script Explanations
 - **00_download_dbhydro.R**: This script finds and downloads salinity data (continuous and grab measurements) from DBHydro from 04/01/2013 to 2/13/2026. Outputs:
    - sfwmd-data-2026XXXXXXXX.zip files for continuous and grab data
