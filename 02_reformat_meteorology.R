@@ -6,7 +6,7 @@
 # Purpose:
 ## This script reformats meteorology data for Everglades National Park
 ## by changing the resolution to match Landsat.
-## NOTE: run on Grace cluster for fast computation.
+## NOTE: run on Bouchet cluster for fast computation.
 
 ## --------------------------------------------- ##
 #               Housekeeping -----
@@ -18,11 +18,11 @@ library(terra)
 library(sf)
 library(climateR)
 
-# Point to the Landsat Salinity folder
-my_folder <- '/home/ac3656/ENP_Landsat_Salinity_Model'
+# Point to the Landsat Salinity folder on cluster
+my_folder <- '/home/ac3656/GitHub/ENP_Landsat_Salinity_Model'
 
-# Point to the project folder
-my_project <- '/home/ac3656/project'
+# Point to the project folder on cluster
+my_project <- '/nfs/roberts/project/pi_sm3466/ac3656'
 
 # Create new folders to store rasters
 dir.create(path = file.path(my_project, "ENP_Precipitation_Landsat_res"), showWarnings = F)
@@ -30,7 +30,7 @@ dir.create(path = file.path(my_project, "ENP_SolarRadiation_Landsat_res"), showW
 dir.create(path = file.path(my_project, "ENP_AverageTemperature_Landsat_res"), showWarnings = F)
 
 # Read in one raster to use as a template 
-template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
+template_raster <- terra::rast(file.path(my_folder, "appeears_landsat_data", "L30", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 # Read in rasters
 #precip_r <- terra::rast(file.path(my_folder, "ENP_Precipitation.tif"))

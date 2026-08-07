@@ -24,7 +24,7 @@ shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "s
 enp <- sf::read_sf(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
 # Read in one raster to use as a template 
-template_raster <- terra::rast(file.path("appeears_landsat_data", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
+template_raster <- terra::rast(file.path("appeears_landsat_data", "L30", "B01", "HLSL30.020_B01_doy2013111_aid0001_17N.tif"))
 
 # Make the CRS of the ENP boundary shapefile the same as the template raster just in case
 enp_v2 <- enp %>%
