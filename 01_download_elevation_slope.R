@@ -19,7 +19,7 @@ library(elevatr)
 
 # CHANGE AS NEEDED --------------------------------
 
-# Export to server? 0 for no, 1 for yes
+# Export to server as well as locally? 0 for no, 1 for yes
 export_server <- 0
 
 # -------------------------------------------------
