@@ -32,15 +32,16 @@ dir.create(path = file.path("model_validity_results_timeframe_diff", "random_for
 dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results"), showWarnings = F)
 
 if (use_data_on_server == 1){
-  # Point to the Landsat Salinity Model folder
-  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
-  
-  # Read in modelling data
-  DBSAL_orig <- readr::read_csv(file.path(landsat_salinity_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
+  # Point to the MaloneLab Server project folder
+  project_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
 } else {
-  # Read in modelling data
-  DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+  # Point to our current working directory
+  # (It should be your local project folder)
+  project_folder <- getwd()
 }
+
+# Read in modelling data
+DBSAL_orig <- readr::read_csv(file.path(project_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
 
 DBSAL <- DBSAL_orig %>% 
   # Remove missing values

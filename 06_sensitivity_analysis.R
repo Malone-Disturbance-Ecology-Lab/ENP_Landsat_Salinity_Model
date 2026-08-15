@@ -39,26 +39,21 @@ for (a_var in vars){
 }
 
 if (use_data_on_server == 1){
-  # Point to the Landsat Salinity Model folder
-  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
-  
-  # Find the non-grab stations
-  non_grab_stations <- readr::read_csv(file.path(landsat_salinity_folder, "DBHydro_lonlat.csv")) %>%
-    dplyr::filter(grab == 0) %>%
-    dplyr::pull(station)
-  
-  # Read in modelling data
-  DBSAL_orig <- readr::read_csv(file.path(landsat_salinity_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
-  
+  # Point to the MaloneLab Server project folder
+  project_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
 } else {
-  # Find the non-grab stations
-  non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
-    dplyr::filter(grab == 0) %>%
-    dplyr::pull(station)
-  
-  # Read in modelling data
-  DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+  # Point to our current working directory
+  # (It should be your local project folder)
+  project_folder <- getwd()
 }
+
+# Find the non-grab stations
+non_grab_stations <- readr::read_csv(file.path(project_folder, "DBHydro_lonlat.csv")) %>%
+  dplyr::filter(grab == 0) %>%
+  dplyr::pull(station)
+
+# Read in modelling data
+DBSAL_orig <- readr::read_csv(file.path(project_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
 
 DBSAL <- DBSAL_orig %>% 
   # Remove missing values
