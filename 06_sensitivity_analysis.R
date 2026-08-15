@@ -38,18 +38,24 @@ for (a_var in vars){
   dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results", a_var), showWarnings = F)
 }
 
-# Find the non-grab stations
-non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
-  dplyr::filter(grab == 0) %>%
-  dplyr::pull(station)
-
 if (use_data_on_server == 1){
   # Point to the Landsat Salinity Model folder
   landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
   
+  # Find the non-grab stations
+  non_grab_stations <- readr::read_csv(file.path(landsat_salinity_folder, "DBHydro_lonlat.csv")) %>%
+    dplyr::filter(grab == 0) %>%
+    dplyr::pull(station)
+  
   # Read in modelling data
   DBSAL_orig <- readr::read_csv(file.path(landsat_salinity_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
+  
 } else {
+  # Find the non-grab stations
+  non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
+    dplyr::filter(grab == 0) %>%
+    dplyr::pull(station)
+  
   # Read in modelling data
   DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
 }
