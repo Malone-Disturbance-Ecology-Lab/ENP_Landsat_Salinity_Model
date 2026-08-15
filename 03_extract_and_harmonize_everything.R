@@ -21,7 +21,7 @@ library(tsibble)
 # CHANGE AS NEEDED --------------------------------
 
 # Export to server as well as locally? 0 for no, 1 for yes
-export_server <- 0
+export_server <- 1
 
 # -------------------------------------------------
 
