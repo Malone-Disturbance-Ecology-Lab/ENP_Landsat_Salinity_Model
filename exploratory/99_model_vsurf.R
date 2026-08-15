@@ -31,7 +31,7 @@ DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format
   # Remove infinite values
   filter(!if_any(everything(), is.infinite)) 
 
-Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
+Fmask_lookup <- read_csv(file.path("appeears_landsat_lookup", "HLSL30-020-Fmask-lookup.csv")) %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 

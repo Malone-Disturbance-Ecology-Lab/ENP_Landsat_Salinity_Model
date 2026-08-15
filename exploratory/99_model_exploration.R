@@ -28,7 +28,7 @@ DBSAL <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format
 DBSAL_cor <- cor(DBSAL[,c(8:27)], use = "pairwise.complete.obs")
 corrplot::corrplot(DBSAL_cor)
 
-Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
+Fmask_lookup <- read_csv(file.path("appeears_landsat_lookup", "HLSL30-020-Fmask-lookup.csv")) %>%
   # Find the Fmask values for high aerosol, cloudy days
   dplyr::filter((`Aerosol level` == "High aerosol" & Cloud == "Yes") |
                 (`Aerosol level` == "Moderate aerosol" & Cloud == "Yes"))

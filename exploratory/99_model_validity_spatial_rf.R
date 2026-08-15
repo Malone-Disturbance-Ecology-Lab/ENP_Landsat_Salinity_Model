@@ -134,7 +134,7 @@ readr::write_csv(unique_pairs, file.path("model_validity_results",
 #    Predicted Data: Getting R-Squared for Pairs of Stations -----
 ## --------------------------------------------------------------- ##
 
-Fmask_lookup <- read_csv("HLSL30-020-Fmask-lookup.csv") %>%
+Fmask_lookup <- read_csv(file.path("appeears_landsat_lookup", "HLSL30-020-Fmask-lookup.csv")) %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 

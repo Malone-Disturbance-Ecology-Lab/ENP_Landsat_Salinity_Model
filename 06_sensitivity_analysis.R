@@ -46,7 +46,7 @@ DBSAL <- DBSAL_orig %>%
   # Remove grab stations
   dplyr::filter(station %in% non_grab_stations)
 
-Fmask_lookup <- readr::read_csv("HLSL30-020-Fmask-lookup.csv") %>%
+Fmask_lookup <- readr::read_csv(file.path("appeears_landsat_lookup", "HLSL30-020-Fmask-lookup.csv")) %>%
   # Find the Fmask values for cloudy days
   dplyr::filter(Cloud == "Yes")
 
