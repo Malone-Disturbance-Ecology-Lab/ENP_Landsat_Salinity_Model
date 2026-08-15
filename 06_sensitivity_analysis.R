@@ -16,6 +16,13 @@ library(tidyverse)
 library(randomForest)
 library(rlang)
 
+# CHANGE AS NEEDED (also see towards bottom of script) ----------
+
+# Use the modelling data on MaloneLab Server? 0 for no, 1 for yes 
+use_data_on_server <- 1
+
+# ---------------------------------------------------------------
+
 # Create new folders to store results
 dir.create(path = file.path("sensitivity_analysis"), showWarnings = F)
 dir.create(path = file.path("sensitivity_analysis", "random_forest"), showWarnings = F)
@@ -36,7 +43,16 @@ non_grab_stations <- readr::read_csv("DBHydro_lonlat.csv") %>%
   dplyr::filter(grab == 0) %>%
   dplyr::pull(station)
 
-DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+if (use_data_on_server == 1){
+  # Point to the Landsat Salinity Model folder
+  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  
+  # Read in modelling data
+  DBSAL_orig <- readr::read_csv(file.path(landsat_salinity_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
+} else {
+  # Read in modelling data
+  DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+}
 
 DBSAL <- DBSAL_orig %>% 
   # Remove missing values

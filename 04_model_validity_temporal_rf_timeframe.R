@@ -16,6 +16,13 @@
 library(tidyverse)
 library(randomForest)
 
+# CHANGE AS NEEDED (also see towards bottom of script) ----------
+
+# Use the modelling data on MaloneLab Server? 0 for no, 1 for yes 
+use_data_on_server <- 1
+
+# ---------------------------------------------------------------
+
 # Create new folders to store results
 dir.create(path = file.path("model_validity_results_timeframe_diff"), showWarnings = F)
 # Folder that includes calculating difference betw actual values and predictions
@@ -24,8 +31,16 @@ dir.create(path = file.path("model_validity_results_timeframe_diff", "random_for
 dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "full_results"), showWarnings = F)
 dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results"), showWarnings = F)
 
-
-DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+if (use_data_on_server == 1){
+  # Point to the Landsat Salinity Model folder
+  landsat_salinity_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  
+  # Read in modelling data
+  DBSAL_orig <- readr::read_csv(file.path(landsat_salinity_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
+} else {
+  # Read in modelling data
+  DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) 
+}
 
 DBSAL <- DBSAL_orig %>% 
   # Remove missing values
