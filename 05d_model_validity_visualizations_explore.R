@@ -19,12 +19,15 @@ library(tidyverse)
 library(plotly)
 library(sf)
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("model_validity_visualizations"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "explore"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "explore", "sal_vs_pred"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "explore", "diff_sal_bins"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "explore", "model_variables_by_year"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "explore"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "explore", "sal_vs_pred"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "explore", "diff_sal_bins"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "explore", "model_variables_by_year"), showWarnings = F)
 
 ## --------------------------------------------- ##
 #         Looking at Map of Stations -----
@@ -33,11 +36,11 @@ dir.create(path = file.path("model_validity_visualizations", "explore", "model_v
 # Point to the folder with the ENP shapefile
 shapefile_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP", "shapefiles")
 
-DBHydro_sf <- sf::st_read(file.path("ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
+DBHydro_sf <- sf::st_read(file.path(output_folder, "ENP_DBHydro_sf", "ENP_DBHydro_sf.shp"))
 
 ENP <- sf::st_read(file.path(shapefile_folder, "Everglades_NP_4326.shp"))
 
-results_0.33 <- read_csv("results_0.33_cutoff.csv")
+results_0.33 <- read_csv(file.path(output_folder, "results_0.33_cutoff.csv"))
 
 good_stations <- results_0.33 %>%
   dplyr::filter(count_does_well >= 5) %>%
@@ -64,7 +67,7 @@ ggplot() +
 ## --------------------------------------------- ##
 
 # Point to folder with model results
-full_path <- file.path("model_validity_results_timeframe_diff", "random_forest", "full_results")
+full_path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "full_results")
 
 # List files 
 files_to_harmonize <- list.files(full_path, pattern = "obs_vs_pred_", full.names = T)
@@ -98,7 +101,7 @@ p <- ggplot() +
   facet_wrap(~salinity_bin) +
   coord_cartesian(xlim = c(-35, 35))
 
-ggsave(file.path("model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_all_years.png")), 
+ggsave(file.path(output_folder, "model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_all_years.png")), 
        p, height = 6, width = 8)
 
 # ggplot() +
@@ -115,7 +118,7 @@ for (i in my_years){
     facet_wrap(~salinity_bin) +
     labs(title = paste("Difference betw. salinity and prediction, faceted by salinity bins,", i))
   
-  ggsave(file.path("model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_", i, ".png")), 
+  ggsave(file.path(output_folder, "model_validity_visualizations", "explore", "diff_sal_bins", paste0("diff_sal_bins_", i, ".png")), 
          p, height = 6, width = 8)
 }
 
@@ -123,7 +126,7 @@ for (i in my_years){
 #         Looking at Summary Results -----
 ## --------------------------------------------- ##
 
-results_0.33 <- read_csv("results_0.33_cutoff.csv")
+results_0.33 <- read_csv(file.path(output_folder, "results_0.33_cutoff.csv"))
 
 good_stations <- results_0.33 %>%
   dplyr::filter(count_does_well >= 5) %>%
@@ -131,7 +134,7 @@ good_stations <- results_0.33 %>%
   dplyr::pull(station_name)
 
 # Point to folder with model results
-summary_path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
+summary_path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize2 <- list.files(summary_path, pattern = "obs_vs_pred_", full.names = T)
@@ -172,7 +175,7 @@ p <- ggplot(aes(x = pred_year, y = avg_pred, group = 1, color = good_or_bad), da
   theme(axis.text.x = element_text(angle = 45, size = 8)) +
   labs(title = "Average predictions vs. prediction years, colored by good or bad stations")
 
-ggsave(file.path("model_validity_visualizations", "explore", paste0("pred_vs_pred_year.png")), 
+ggsave(file.path(output_folder, "model_validity_visualizations", "explore", paste0("pred_vs_pred_year.png")), 
        p, height = 16, width = 20)
 
 summary_results_harmonized_v2 <- summary_results_harmonized %>%
@@ -202,7 +205,7 @@ ggplot() +
 # Looking at Good vs. Bad Years and Stations -----
 ## --------------------------------------------- ##
 
-DBSAL_orig <- readr::read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
+DBSAL_orig <- readr::read_csv(file.path(output_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d")))
 
 # Create a version of the data with filled out band values
 # (Landsat and Sentinel values taken from the nearest previous day)
@@ -259,7 +262,7 @@ ggplotly(p)
 ## --------------------------------------------- ##
 
 # Point to folder with model results
-full_path <- file.path("model_validity_results_timeframe_diff", "random_forest", "full_results")
+full_path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "full_results")
 
 # List files 
 files_to_harmonize <- list.files(full_path, pattern = "obs_vs_pred_", full.names = T)
@@ -300,7 +303,7 @@ for (i in years){
     theme(axis.text.x = element_text(angle = 45, size = 6)) +
     labs(title = paste("salinity (green) vs. avg daily prediction (red),", start_year))
   
-  ggsave(file.path("model_validity_visualizations", "explore", "sal_vs_pred", paste0("sal_vs_avgpred_", start_year, ".png")), p, height = 12, width = 18)
+  ggsave(file.path(output_folder, "model_validity_visualizations", "explore", "sal_vs_pred", paste0("sal_vs_avgpred_", start_year, ".png")), p, height = 12, width = 18)
 }
 
 ## --------------------------------------------- ##

@@ -15,11 +15,14 @@
 library(tidyverse)
 library(randomForest)
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 ## --------------------------------------------- ##
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
-path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
+path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize <- list.files(path, pattern = "obs_vs_pred_", full.names = T)
@@ -126,4 +129,4 @@ results_0.33_cutoff <- results_harmonized %>%
 # More stations getting labelled as consistently "good"
 # 21 stations where count_does_well >= 3
 
-write_csv(results_0.33_cutoff, "results_0.33_cutoff.csv")
+write_csv(results_0.33_cutoff, file.path(output_folder, "results_0.33_cutoff.csv"))

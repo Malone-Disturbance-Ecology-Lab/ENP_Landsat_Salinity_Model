@@ -14,14 +14,17 @@
 library(tidyverse)
 library(rlang)
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("model_validity_visualizations"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "cutoff_0.5"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "cutoff_0.33"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "cutoff_0.5"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "cutoff_0.33"), showWarnings = F)
 
-results_0.33 <- read_csv("results_0.33_cutoff.csv")
+results_0.33 <- read_csv(file.path(output_folder, "results_0.33_cutoff.csv"))
 
-DBSAL_orig <- read_csv("DBSAL.csv", col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>%
+DBSAL_orig <- read_csv(file.path(output_folder, "DBSAL.csv"), col_types = cols(formatted_date = col_date(format = "%Y-%m-%d"))) %>%
   # Removing outliers to see general patterns more easily
   # Removing 4 outlier points where salinity had values of 3400, 1380, 157
   dplyr::filter(salinity < 100 | is.na(salinity)) %>%
@@ -78,7 +81,7 @@ for (a_var in vars){
     facet_wrap(~station)
   
   # Save plot
-  ggsave(file.path("model_validity_visualizations", "cutoff_0.5", paste0(a_var, "_plot.png")), p, height = 12, width = 18)
+  ggsave(file.path(output_folder, "model_validity_visualizations", "cutoff_0.5", paste0(a_var, "_plot.png")), p, height = 12, width = 18)
 }
 
 # Create plots when the R^2 cutoff to be considered "good" is 0.33 ---------
@@ -114,5 +117,5 @@ for (a_var in vars){
     facet_wrap(~station)
   
   # Save plot
-  ggsave(file.path("model_validity_visualizations", "cutoff_0.33", paste0(a_var, "_plot.png")), p, height = 12, width = 18)
+  ggsave(file.path(output_folder, "model_validity_visualizations", "cutoff_0.33", paste0(a_var, "_plot.png")), p, height = 12, width = 18)
 }

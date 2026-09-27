@@ -14,12 +14,15 @@
 library(tidyverse)
 library(RColorBrewer)
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("model_validity_visualizations"), showWarnings = F)
-dir.create(path = file.path("model_validity_visualizations", "check_pred"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_visualizations", "check_pred"), showWarnings = F)
 
 # Point to folder with model results
-path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
+path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize <- list.files(path, pattern = "obs_vs_pred_", full.names = T)
@@ -98,7 +101,7 @@ p1 <- ggplot(data = sal_summary) +
   facet_wrap(~station_name) +
   ylab("actual salinity value (green) or prediction (red)")
 
-ggsave(file.path("model_validity_visualizations", "check_pred", "pred_year_vs_sal.png"), 
+ggsave(file.path(output_folder, "model_validity_visualizations", "check_pred", "pred_year_vs_sal.png"), 
        p1, height = 16, width = 20)
 
 # Plotting prediction year vs R-squared ----------------------
@@ -135,9 +138,8 @@ p3 <- ggplot() +
   theme(axis.text.x = element_text(angle = 45, size = 8)) +
   scale_color_binned(type = "viridis") 
 
-ggsave(file.path("model_validity_visualizations", "check_pred", "pred_year_vs_rsq.png"), 
+ggsave(file.path(output_folder, "model_validity_visualizations", "check_pred", "pred_year_vs_rsq.png"), 
        p2, height = 16, width = 20)
 
-ggsave(file.path("model_validity_visualizations", "check_pred", "pred_year_vs_rsq_positive.png"), 
+ggsave(file.path(output_folder, "model_validity_visualizations", "check_pred", "pred_year_vs_rsq_positive.png"), 
        p3, height = 16, width = 20)
-

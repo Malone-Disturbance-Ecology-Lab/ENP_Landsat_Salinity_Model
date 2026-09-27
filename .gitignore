@@ -19,4 +19,15 @@ model_validity_results_timeframe_diff/
 model_validity_visualizations/
 sensitivity_analysis/
 sensitivity_analysis_visualizations/
-deprecated/
+# Python pipeline intermediates
+__pycache__/
+*.pkl
+*.npz
+*.npy
+*.log
+python/SERVER
+python/sitevars
+python/downloads
+python/veg_rows/
+python/daily_maps/
+python/eden_daily/

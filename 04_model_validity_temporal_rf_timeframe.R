@@ -23,17 +23,20 @@ use_data_on_server <- 1
 
 # ---------------------------------------------------------------
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("model_validity_results_timeframe_diff"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_results_timeframe_diff"), showWarnings = F)
 # Folder that includes calculating difference betw actual values and predictions
-dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest"), showWarnings = F)
 # Folder that includes full results (specific predictions) and summary results
-dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "full_results"), showWarnings = F)
-dir.create(path = file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "full_results"), showWarnings = F)
+dir.create(path = file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "summary_results"), showWarnings = F)
 
 if (use_data_on_server == 1){
   # Point to the MaloneLab Server project folder
-  project_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  project_folder <- output_folder
 } else {
   # Point to our current working directory
   # (It should be your local project folder)
@@ -273,13 +276,15 @@ for (my_years in my_years_series){
                          filled_data = DBSAL_filled)
     
     # Export the full results that has the specific predictions
-    readr::write_csv(df$full, file.path("model_validity_results_timeframe_diff",
+    readr::write_csv(df$full, file.path(output_folder,
+                                        "model_validity_results_timeframe_diff",
                                         "random_forest",
                                         "full_results",
                                         paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
     
     # Export the summary results by station
-    readr::write_csv(df$summary, file.path("model_validity_results_timeframe_diff",
+    readr::write_csv(df$summary, file.path(output_folder,
+                                           "model_validity_results_timeframe_diff",
                                            "random_forest",
                                            "summary_results",
                                            paste0("obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_summary.csv")))
@@ -291,7 +296,7 @@ for (my_years in my_years_series){
 #                 Harmonizing -----
 ## --------------------------------------------- ##
 
-path <- file.path("model_validity_results_timeframe_diff", "random_forest", "summary_results")
+path <- file.path(output_folder, "model_validity_results_timeframe_diff", "random_forest", "summary_results")
 
 # List files 
 files_to_harmonize <- list.files(path, pattern = "obs_vs_pred_", full.names = T)
@@ -307,4 +312,3 @@ results_harmonized <- files_to_harmonize %>%
   dplyr::mutate(coeff_det = round(coeff_det, digits = 4)) %>%
   # Remove infinite values
   dplyr::filter(!if_any(everything(), is.infinite)) 
-

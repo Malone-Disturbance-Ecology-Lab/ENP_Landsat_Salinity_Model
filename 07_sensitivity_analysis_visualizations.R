@@ -14,8 +14,11 @@
 library(tidyverse)
 library(plotly)
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("sensitivity_analysis_visualizations"), showWarnings = F)
+dir.create(path = file.path(output_folder, "sensitivity_analysis_visualizations"), showWarnings = F)
 
 ## --------------------------------------------- ##
 #     Harmonizing and Visualizing Function -----
@@ -110,7 +113,7 @@ harmonize_visualize <- function(var_interest, path_to_files){
     labs(title = paste("Average daily prediction vs.", var_interest))
   
   # Export
-  ggsave(file.path("sensitivity_analysis_visualizations", paste0("avgpred_vs_", var_interest, ".png")), 
+  ggsave(file.path(output_folder, "sensitivity_analysis_visualizations", paste0("avgpred_vs_", var_interest, ".png")), 
          p, height = 7, width = 10)
   
 }
@@ -131,7 +134,7 @@ for (i in all_vars){
   my_var <- i
   
   # Point to folder with model results
-  my_path <- file.path("sensitivity_analysis", "random_forest", "full_results", my_var)
+  my_path <- file.path(output_folder, "sensitivity_analysis", "random_forest", "full_results", my_var)
   
   # Visualize
   harmonize_visualize(var_interest = my_var, path_to_files = my_path)

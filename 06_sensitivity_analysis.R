@@ -23,24 +23,27 @@ use_data_on_server <- 1
 
 # ---------------------------------------------------------------
 
+server_folder <- file.path("/", "Volumes", "MaloneLab", "Research", "ENP_Landsat_Salinity_Model")
+output_folder <- if (dir.exists(server_folder)) server_folder else getwd()
+
 # Create new folders to store results
-dir.create(path = file.path("sensitivity_analysis"), showWarnings = F)
-dir.create(path = file.path("sensitivity_analysis", "random_forest"), showWarnings = F)
+dir.create(path = file.path(output_folder, "sensitivity_analysis"), showWarnings = F)
+dir.create(path = file.path(output_folder, "sensitivity_analysis", "random_forest"), showWarnings = F)
 # Folders that includes full results (specific predictions) and summary results
-dir.create(path = file.path("sensitivity_analysis", "random_forest", "full_results"), showWarnings = F)
-dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results"), showWarnings = F)
+dir.create(path = file.path(output_folder, "sensitivity_analysis", "random_forest", "full_results"), showWarnings = F)
+dir.create(path = file.path(output_folder, "sensitivity_analysis", "random_forest", "summary_results"), showWarnings = F)
 
 # Variable-specific folders
 vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
 
 for (a_var in vars){
-  dir.create(path = file.path("sensitivity_analysis", "random_forest", "full_results", a_var), showWarnings = F)
-  dir.create(path = file.path("sensitivity_analysis", "random_forest", "summary_results", a_var), showWarnings = F)
+  dir.create(path = file.path(output_folder, "sensitivity_analysis", "random_forest", "full_results", a_var), showWarnings = F)
+  dir.create(path = file.path(output_folder, "sensitivity_analysis", "random_forest", "summary_results", a_var), showWarnings = F)
 }
 
 if (use_data_on_server == 1){
   # Point to the MaloneLab Server project folder
-  project_folder <- file.path("/", "Volumes", "malonelab", "Research", "ENP_Landsat_Salinity_Model") 
+  project_folder <- output_folder
 } else {
   # Point to our current working directory
   # (It should be your local project folder)
@@ -270,28 +273,32 @@ my_years_series <- list(2013:2025)
 #my_years_series <- list(2013:2020, 2013:2019, 2013:2018, 2013:2017)
 #my_years_series <- list(2013:2016, 2013:2015, 2013:2014, 2013)
 
-# Set variable of interest (we let this vary)
-my_var <- "distCoast"
+# Set variables of interest (we let these vary)
+vars_to_run <- all_vars
 # ---------------------------------------------
 
-# For every range in the series...
-for (my_years in my_years_series){
-  # Set target year to be the last year in the timeframe
-  my_target <- my_years[length(my_years)]
-  message("target: ", my_target)
+# For every variable of interest...
+for (my_var in vars_to_run){
+  message("variable: ", my_var)
   
-  # List all model variables
-  all_vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
+  # For every range in the series...
+  for (my_years in my_years_series){
+    # Set target year to be the last year in the timeframe
+    my_target <- my_years[length(my_years)]
+    message("target: ", my_target)
+    
+    # List all model variables
+    all_vars <- c("distCoast", "slope", "B03", "srad", "CRSI", "SI", "NDSI", "B06", "NLI", "tavg")
   
-  # List variables we hold constant
-  const_vars <- setdiff(all_vars, my_var)
+    # List variables we hold constant
+    const_vars <- setdiff(all_vars, my_var)
   
-  # List percentile levels
-  all_levels <- c("low", "med", "high")
+    # List percentile levels
+    all_levels <- c("low", "med", "high")
   
-  # For every year in the timeframe range...
-  for (i in my_years){
-    message("on: ", i)
+    # For every year in the timeframe range...
+    for (i in my_years){
+      message("on: ", i)
     
     # Set it as the start year
     my_start_year <- i
@@ -358,14 +365,16 @@ for (my_years in my_years_series){
                            filled_data = fake_data)
       
       # Export the full results that has the specific predictions
-      readr::write_csv(df$full, file.path("sensitivity_analysis",
+      readr::write_csv(df$full, file.path(output_folder,
+                                          "sensitivity_analysis",
                                           "random_forest",
                                           "full_results",
                                           my_var,
                                           paste0(my_var, "_", j, "_obs_vs_pred_", my_start_year, "_", my_start_year+my_interval-1, "_full_results.csv")))
       
       # Export the summary results by station
-      readr::write_csv(df$summary, file.path("sensitivity_analysis",
+      readr::write_csv(df$summary, file.path(output_folder,
+                                             "sensitivity_analysis",
                                              "random_forest",
                                              "summary_results",
                                              my_var,
@@ -373,4 +382,4 @@ for (my_years in my_years_series){
     }
   }
 }
-
+}
