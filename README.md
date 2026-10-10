@@ -87,7 +87,9 @@ All inputs are resampled to the native HLS L30 30 m grid, so output pixels match
 | `monthly/ENP_salinity30m_monthly_YYYY_MM.tif` | monthly mean salinity, 156 files, psu × 10 (int16, nodata −1) |
 | `hpc/`, `hpc_inputs/` | Grace SLURM array job that writes the full-model **daily** 30 m archive (`YYYY/ENP_salinity30m_daily_YYYY_MM.tif`, about 11–15 GB); see `hpc/README_HPC.md` |
 | `change30/` | 30 m region/ecosystem summaries, trends (annual means and monthly anomalies), high-salinity events, station checks |
-| `figures/` | Figures 1–7 of the methods/results document (made by `make_figures.py`) |
+| `figures/` | Figures 1–7 of the methods/results document (`make_figures.py --set doc`) |
+| `figures/manuscript/` | Figures 1–7 of the *Scientific Data* manuscript, PNG and PDF at 300 dpi (`make_figures.py --set ms`) |
+| `ms_cache/` | cached map summaries for the manuscript figures (30 m mean, May/October climatology, monthly-anomaly trend map); delete or use `--refresh` to rebuild |
 | `ENP_region_ecosystem_classes_30m.tif` | region (band 1) and ecosystem (band 2) for each 30 m cell |
 | `station_daily_model_series_2013_2025_250m_30m.csv.gz` | daily model at 90 stations (250 m and 30 m) with gauge values |
 | `scripts/` | copies of the 30 m scripts |
@@ -127,6 +129,7 @@ Root: `/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model` (`smb://corellia.
 | **Daily 30 m archive** (written by the HPC job) and its inputs | `best_two_step/salinity30m/hpc/`, `hpc_inputs/` (output: `best_two_step/daily30m/`) |
 | Region/ecosystem summaries, trends, high-salinity events (30 m, current) | `best_two_step/salinity30m/change30/` |
 | Figures 1–7 of the methods/results document | `best_two_step/salinity30m/figures/` |
+| Figures 1–7 of the *Scientific Data* manuscript (PNG + PDF) | `best_two_step/salinity30m/figures/manuscript/` |
 | Same analyses at 250 m (previous version) | `best_two_step/daily_maps/change_analysis/` |
 | Superseded model versions (v1–v3, connectivity and basin CV) | `spatial_cv/`, `connectivity_uncertainty/`, `basins_monthly/`, `basins_monthly_v3/`, `two_step_model/` |
 | Legacy RF model outputs | `model_validity_results_timeframe_diff/`, `deprecated/` |
@@ -137,6 +140,7 @@ gridMET daily NetCDFs (`agg_met_{pr,srad,tmmn,tmmx}_1979_CurrentYear_CONUS.nc`) 
 | document | link |
 |---|---|
 | Methods and results write-up (model, validation, 30 m mapping, salinity across regions/ecosystems, change 2013–2025, high-salinity events; Figures 1–7) | https://claude.ai/code/artifact/98493237-64e4-4392-a3a6-7b893b116bc3 |
+| *Scientific Data* Data Descriptor draft (Figures 1–7 from `make_figures.py --set ms`) | https://claude.ai/code/artifact/23d79ea7-81df-4c7f-a971-4a6ea29ba5ca |
 | EDI data-package metadata (for publishing the daily 30 m layers) | https://claude.ai/code/artifact/62565e15-a16b-4721-ab45-4ed2dd245386 |
 | Working notes for each analysis step (dated `claude/*.md` docs) | Claude project "ENP_Landsat_Salinity_Model" |
 
@@ -223,7 +227,12 @@ Run order:
 29. `events30.py`: high-salinity events from daily 30 m salinity, and station series. Takes about 1.5 h.
 30. `station_check30.py`: gauge checks (daily skill, annual trends, event days).
 31. `trend30_seasonal.py`, `station_trend_monthly30.py`: trends in monthly anomalies at every 30 m pixel and at the gauges. Uses the seasonal Kendall test with the Hirsch–Slack correction and the seasonal Theil–Sen slope, with BH-FDR across pixels. Takes about 10 min.
-32. **`make_figures.py`**: makes every figure in the methods/results document (Figures 1–7) from the saved outputs. Run `python make_figures.py` for all of them, or `python make_figures.py 4 5` for a subset. Wherever colour encodes salinity, red = more saline.
+32. **`make_figures.py`**: makes every figure from the released outputs on the server. Wherever colour encodes salinity, red = more saline.
+    - `python make_figures.py --set ms` writes the 7 manuscript figures (PNG and PDF, 300 dpi) to `best_two_step/salinity30m/figures/manuscript/`: study area, workflow, example products, validation, station time series, 250 m vs 30 m, usage examples. `python make_figures.py --set ms 3 6` makes a subset.
+    - `--root` points to the server folder (default `$ENP_DATA_ROOT`, else `/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model`); `--out` changes the output folder; `--refresh` rebuilds the cached map summaries in `salinity30m/ms_cache/` (about 3 min).
+    - The manuscript set reads only released files: the 30 m monthly GeoTIFFs, the class raster, the 250 m monthly means, the held-out predictions (`timeseries/station_daily_model_vs_gauge.csv.gz`), station metrics and the `change30/` tables. The 90% intervals are rebuilt from the held-out predictions (split-conformal half-widths 4.7, 10.6, 11.7, 6.0 psu by predicted level).
+    - `--set doc` runs `make_figures_doc.py`, which makes the methods/results document figures. It needs the intermediate model files (`best_two_step_oof.pkl`, `px30_index.npy`, `map30/`, `daily_maps/median_int16.npy`) in the working directory.
+    - Requires numpy, pandas, scipy, matplotlib and rasterio.
 33. `hpc/daily30_hpc.py` + `hpc/run_daily30.slurm`: the full-model daily 30 m archive on Grace, one array task per month (see `hpc/README_HPC.md`).
 
 ---
