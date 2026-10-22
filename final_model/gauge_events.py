@@ -1,6 +1,7 @@
 """Event days per station-year at gauges vs masked maps at gauge cells (same days), and period change 2000-12 -> 2013-25."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import sys, numpy as np, pandas as pd
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
+U=f'{ROOT}'
 D=pd.read_csv(f'{U}/dbhydro_hindcast/results/hindcast_station_daily_2000_2025.csv.gz',parse_dates=['date'])[['station','date','gauge_salinity']]
 M=pd.read_csv(sys.argv[1],parse_dates=['date']); M['station']=M.station.astype(str); D['station']=D.station.astype(str)
 X=D.merge(M,on=['station','date']).dropna(subset=['gauge_salinity','model_salinity_30m_onestep_masked'])

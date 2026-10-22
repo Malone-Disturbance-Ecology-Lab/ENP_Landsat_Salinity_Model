@@ -26,6 +26,7 @@ conformal 90th percentile of |held-out residual| in 2013-2024 within bins of pre
 
 Colour convention: wherever colour encodes salinity, red = more saline and blue = fresher.
 """
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import os, sys, argparse, glob, numpy as np, pandas as pd
 import matplotlib, matplotlib.ticker
 matplotlib.use('Agg')
@@ -58,7 +59,7 @@ plt.rcParams.update({'font.size': 7.5, 'font.family': 'DejaVu Sans', 'axes.edgec
 A = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 A.add_argument('figs', nargs='*', type=int)
 A.add_argument('--set', choices=['ms', 'doc'], default=None)
-A.add_argument('--root', default=os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'))
+A.add_argument('--root', default=ROOT)
 A.add_argument('--out', default=None)
 A.add_argument('--refresh', action='store_true')
 ARGS = A.parse_args() if __name__ == '__main__' else A.parse_args([])

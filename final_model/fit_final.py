@@ -1,8 +1,9 @@
 """Final one-step model (no HLS): released predictors + sea level (msl_1m, msl_3m, msl_12m), trained 2000-04..2025-12 at all
 non-anchor stations plus 13 fresh DBHydro conductivity sites (equal weights). Block CV -> conformal levels; final fit."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import sys, json, pickle, numpy as np, pandas as pd; sys.path.insert(0,__import__('os').path.dirname(__import__('os').path.abspath(__file__)))
 from harness import *
-E='work/exp'; MS=['msl_1m','msl_3m','msl_12m']; FE=F0+MS
+E=f'{WORK}/exp'; MS=['msl_1m','msl_3m','msl_12m']; FE=F0+MS
 TA=pd.read_parquet(f'{E}/TA_index.parquet'); T=pd.read_parquet(f'{E}/T.parquet'); F=pd.read_parquet(f'{E}/fresh_station_features.parquet')
 ref=T.drop_duplicates('date').set_index('date')
 for c in MS: F[c]=F.date.map(ref[c])

@@ -1,7 +1,8 @@
 """Inputs for 30 m mapping on the native HLS/Landsat grid (3839 x 4171, EPSG:4326, 0.000271 deg).
 1) static30.npy  : (n_static, n_inside) float32 static features at every 30 m pixel inside the domain
-2) spec_grid.npy : (32, 156, 240, 521) float16 vegetation-spectral composites on the sampling grid
+2) spec_grid.npy (only with --spectra; deprecated two-step model): (32, 156, 240, 521) float16 vegetation-spectral composites on the sampling grid
                    (rows every 16 px, 8-px blocks), bilinearly resampled to 30 m in run30.py"""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, rasterio, time, json
 from scipy import ndimage as ndi
 from scipy.signal import fftconvolve
@@ -9,7 +10,7 @@ from scipy.spatial import cKDTree
 from pyproj import Transformer
 t0=time.time()
 names=['SRS','TaylorSlough','C111','BigCypress']; SRC=['src_dist_SRS_km','src_dist_TaylorSlough_km','src_dist_C111_km','src_dist_BigCypressGulf_km']
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model/site_variables/'
+U=f'{ROOT}/site_variables/'
 wfr=rasterio.open(U+'ENP_WaterFrequency_L30.tif'); wf=wfr.read(1); T=wfr.transform; H,W=wf.shape
 inside=(wf>-1).ravel(); idx=np.flatnonzero(inside); NP=len(idx); np.save('px30_index.npy',idx.astype(np.int64))
 print('30 m grid',H,W,'inside pixels',NP,flush=True)
@@ -43,6 +44,9 @@ X,Y=Transformer.from_crs(4326,26917,always_xy=True).transform(lon,lat); np.save(
 dd,_=tree.query(np.column_stack([X,Y]),workers=2); st['dist_to_eden_cell_km']=(dd/1000).astype('float32')
 keys=sorted(st); np.save('static30.npy',np.stack([st[k] for k in keys])); json.dump(keys,open('static30_keys.json','w'))
 print('static saved',len(keys),round(time.time()-t0),flush=True)
+import sys
+if '--spectra' not in sys.argv:   # the final model has no spectral predictors
+    print('done (static layers only; run with --spectra to also build spec_grid.npy for the deprecated two-step model)'); raise SystemExit
 # ---------------- vegetation spectral composites on the sampling grid (same processing as the 250 m maps)
 IDX=['NDVI','EVI2','NDMI','SWIR1']; II=[0,1,2,5]; vrows=list(range(4,3839,16)); VR=np.load('veg_rows_L30.npz')
 M=np.stack([VR[f'row_{r:04d}'][:,II,:].astype('float32') for r in vrows],2)

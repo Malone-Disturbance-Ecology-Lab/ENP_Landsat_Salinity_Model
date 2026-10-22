@@ -1,7 +1,8 @@
 """ESSD Fig. 1: study area with the 84 model stations, 6 anchor stations and the 13 DBHydro freshwater sites.
 Reuses the drawing helpers of salinity30m/scripts/make_figures.py. Usage: python fig01_study_area.py [root]"""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import os, sys, numpy as np, pandas as pd
-ROOT = sys.argv[1] if len(sys.argv) > 1 else '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
+ROOT = sys.argv[1] if len(sys.argv) > 1 else f'{ROOT}'
 OUT = f'{ROOT}/best_two_step/paper_final'
 os.environ['ENP_DATA_ROOT'] = ROOT; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'python'))
 import make_figures as M; M.OUT = OUT

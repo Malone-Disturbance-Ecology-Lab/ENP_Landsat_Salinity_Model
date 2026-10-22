@@ -1,8 +1,9 @@
 """Daily held-out model (station's spatial block left out) and gauge salinity at six stations, 2000-2025, with the 90 % interval."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import json, numpy as np, pandas as pd, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 INK='#3d3d3a'; MUTED='#77756e'; GRID='#e6e5df'; BLUE='#2a78d6'; ORANGE='#eb6834'
 plt.rcParams.update({'font.size':7.5,'axes.edgecolor':GRID,'text.color':INK,'axes.labelcolor':INK,'xtick.color':MUTED,'ytick.color':MUTED,'axes.titlelocation':'left','axes.titlesize':8})
-C=pd.read_parquet('work/final/cv_predictions_final.parquet'); Q=json.load(open('work/final/q_levels.json')); bins=np.array(Q['bins']); q=np.array(Q['q'])
+C=pd.read_parquet(f'{WORK}/final/cv_predictions_final.parquet'); Q=json.load(open(f'{WORK}/final/q_levels.json')); bins=np.array(Q['bins']); q=np.array(Q['q'])
 ST=pd.read_csv('station_skill_final.csv').set_index('station')
 PICK=[('22908295','freshwater marsh, Shark River Slough'),('ENPNR','Taylor Slough'),('ENPGI','Shark River Slough estuary'),('ENPBS','C-111 basin'),('ENPBA','Florida Bay'),('ENPCA','Big Cypress coast')]
 fig,ax=plt.subplots(len(PICK),1,figsize=(7.09,9.2),sharex=True); plt.subplots_adjust(hspace=0.55)

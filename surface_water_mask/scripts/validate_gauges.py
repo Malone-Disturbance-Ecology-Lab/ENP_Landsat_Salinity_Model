@@ -1,8 +1,9 @@
 """Score the daily wet/dry rule at EDEN gauges: EDEN 400 m grid stage (bilinear, native cells only) vs EDEN DEM
 lower/upper bounds (30 m mean and 10 m point) against the gauge's own D (dry) flag, 2013-2025."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, glob, scipy.io as sio, rasterio
 from pyproj import Transformer
-U = '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'; M = 'work/map'
+U = f'{ROOT}'; M = f'{WORK}/map'
 D10 = f'{U}/EDEN_DEMs_With_Uncertainty_Treatment_v2/EDEN_DEMs_With_Uncertainty_Treatment_v2/10m_DEMs'
 raw = pd.concat([pd.read_csv(f) for f in glob.glob(f'{U}/eden_stage/raw_downloads/eden2_*.csv') if 'coords' not in f])
 raw = raw.drop_duplicates(['site', 'date']); raw['date'] = pd.to_datetime(raw.date)

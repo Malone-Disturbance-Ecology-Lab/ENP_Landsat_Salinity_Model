@@ -1,10 +1,11 @@
 """Model experiments (one-step, station level). 10-block spatial CV (k-means on station coordinates), training on chosen years,
 predictions for every held-out station-day 2000-2025. Metrics: skill by era, fresh-station bias, long-gauge trend agreement."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import sys, time, pickle, json, numpy as np, pandas as pd, warnings; warnings.filterwarnings('ignore')
 from sklearn.ensemble import HistGradientBoostingRegressor as HGB
 from sklearn.cluster import KMeans
 sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
-U = '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
+U = f'{ROOT}'
 ANCH = ['ENPWP', 'ENPSR', 'ENPWW', 'ENPGB', 'TAYLORS3', 'ENPWB']
 def load():
     T = pd.read_parquet(f'{U}/dbhydro_hindcast/features/station_features_2000_2025_v2.parquet')
@@ -24,7 +25,7 @@ def load():
     S = pd.read_csv(f'{U}/site_variables/station_site_variables.csv').set_index('station'); st = sorted(set(T.station))
     km = KMeans(10, n_init=10, random_state=0).fit(S.loc[st, ['longitude', 'latitude']].values); T['block'] = T.station.map(dict(zip(st, km.labels_)))
     return T
-FM = pickle.load(open(f'{U}/best_two_step/salinity30m/hpc_inputs/final_models.pkl', 'rb')); F0 = list(FM['m3'].feature_names_in_); PRM = FM['m3'].get_params()
+from model_config import F0, MS, FE, PRM   # predictor list and hyperparameters of the final model
 def run_cv(T, feats, train_years=(2000, 2025), target='raw', weight=None, prm=None, mono=None, tag=''):
     prm = dict(PRM if prm is None else prm)
     if mono: prm['monotonic_cst'] = mono

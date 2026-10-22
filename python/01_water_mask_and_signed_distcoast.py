@@ -6,7 +6,7 @@ from rasterio.windows import Window
 from pyproj import Transformer
 from scipy import ndimage as ndi
 
-PROJ = '/Volumes/malonelab/Research/ENP_Landsat_Salinity_Model'
+import os; PROJ = os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model')
 FMASK = f'{PROJ}/harmonized_appeears_landsat_data/L30/L30_ENP_Fmask.tif'
 FLORIDA = '/Volumes/malonelab/Research/ENP/shapefiles/Florida'   # NAD83 UTM17N land polygon
 OUT = f'{PROJ}/site_variables'

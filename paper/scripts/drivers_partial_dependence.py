@@ -1,7 +1,8 @@
 """Partial dependence of the final model on main daily drivers, by station salinity zone (training rows; 3000 sampled station-days per zone)."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import pickle, numpy as np, pandas as pd
 from sklearn.inspection import partial_dependence
-E = 'work/exp'; M = pickle.load(open('work/final/final_model_onestep.pkl', 'rb')); m = M['m3']; FE = M['F']
+E = f'{WORK}/exp'; M = pickle.load(open(f'{WORK}/final/final_model_onestep.pkl', 'rb')); m = M['m3']; FE = M['F']
 T = pd.read_parquet(f'{E}/T.parquet'); T = T[T.salinity.notna()]
 z = T.groupby('station').salinity.transform('mean'); T['zone'] = pd.cut(z, [-1, 5, 25, 99], labels=['< 5 psu', '5–25 psu', '> 25 psu'])
 D = {'stage_5km_cm90': 'EDEN water level, 90-day mean within 5 km (cm)', 'SRS90': 'Shark River Slough inflow, 90-day mean',

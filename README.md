@@ -64,23 +64,34 @@ Reading the files: GDAL-based tools (QGIS, R `terra`, Python `rasterio`/`rioxarr
 
 ### Running the workflow
 
-Requirements: R (data download and harmonisation); Python ≥ 3.10 with numpy, pandas, scipy, scikit-learn 1.8, rasterio, pyproj, pyshp, matplotlib, pyarrow, and treelite/tl2cgen to compile the model.
+**Environment.** Python: `conda env create -f environment.yml` (or `pip install -r requirements.txt`). Versions are pinned to those the model was fitted with; scikit-learn must be 1.8.0 to load the pickled model. R (data download and harmonisation): tidyverse, terra, sf, lubridate, tsibble, climateR, elevatr and appeears.
 
-**Paths.** Scripts read the server project folder as `/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model` (the plotting scripts accept `ENP_DATA_ROOT`). Intermediate files are written to a local working folder, written in the scripts as `work/`:
+**Paths.** Two environment variables set every data location:
+- `ENP_DATA_ROOT`: the project folder on the lab server (default `/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model`).
+- `ENP_WORK`: a local folder for intermediate files (default `./work`).
 
-| `work/` subfolder | holds |
+```
+export ENP_DATA_ROOT=/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model
+export ENP_WORK=$PWD/work
+```
+
+| `$ENP_WORK` subfolder | holds |
+
 |---|---|
-| `work/map/` | working folder for `fresh_features.py` |
-| `work/exp/` | the station tables built by `final_model/harness.py` and `fresh_features.py` |
-| `work/final/` | the fitted model and CV predictions (copied to `best_two_step/onestep_final/`) |
-| `work/drivers/`, `work/mask/`, `work/trend/` | intermediate files of the driver analysis, the mask and the masked trends |
+| `exp/` | conductivity tables, freshwater-site inputs and the training table (`fresh_sites.py`, `fresh_features.py`, `build_training_table.py`) |
+| `map/` | working folder for `fresh_features.py` |
+| `final/` | the fitted model and CV predictions, used by the paper scripts (copies of `best_two_step/onestep_final/`) |
+| `drivers/`, `mask/`, `trend/` | intermediate files of the driver analysis, the mask and the masked trends |
+
+The map modules in `final_model/` (`onestep_maps.py`, `onestep_maps_final.py`) read their inputs from `final_model/in/` (a copy of `best_two_step/salinity30m/hpc_inputs/` plus `final_model_onestep.pkl`, `m3_final.so` and `msl_by_date.csv`) and EDEN from `final_model/eden/` (`eden_YYYY_qN.nc`).
 
 The Python scripts in `python/` run from one working directory with three links: `SERVER/` → the server folder, `sitevars/` → `SERVER/site_variables`, and `downloads/` → a local folder holding the gridMET NetCDFs (`agg_met_{pr,srad,tmmn,tmmx}_1979_CurrentYear_CONUS.nc`) and the EDEN intermediates. EDEN v3 quarterly NetCDFs (`YYYY_qN.nc`, 2000–2025) are read from `SERVER/data/EDEN_GRIDS_Q/`. They are available from `https://sflthredds.er.usgs.gov/thredds/fileServer/eden/surfaces/YYYY_qN.nc`.
 
 **1. Gauges and Landsat (R)**
 - `00_download_dbhydro.R`, `01_harmonize_dbhydro.R`: DBHydro salinity (continuous and grab) for 2013–2026 and station locations.
 - `00_download_landsat.R`, `01_harmonize_landsat.R`: HLS L30/S30 stacks. The final model uses only the Landsat water frequency (from Fmask) and the 30 m grid; vegetation spectra are not predictors.
-- `03_extract_and_harmonize_everything.R`, `03b_clean_and_split_data.R`: the station × date table `DBSAL.csv` and `cleaned_data/DBSAL_daily_clean.csv` (0–80 psu, one row per station per day).
+- `01_calculate_dist_coast.R`/`.sh`, `01_download_elevation_slope.R`, `01_download_meteorology.R`, `02_reformat_meteorology.R`/`.sh`: station-level inputs read by the next script (distance to coast, elevation and slope, gridMET at 30 m). The final model's own site variables and climate come from `python/`; these are needed only to rebuild `DBSAL.csv`.
+- `03_extract_and_harmonize_everything.R`, `03b_clean_and_split_data.R`: the station × date table `DBSAL.csv` and `cleaned_data/DBSAL_daily_clean.csv` (0–80 psu, one row per station per day). `python/build_station_feature_table.py` reads the daily salinity and station series from it.
 
 **2. Before 2013** (`hindcast/`; outputs in `SERVER/dbhydro_hindcast/`)
 - `download_dbhydro_pre2013.py`, `harmonize_pre2013.py`: DBHydro salinity back to 1980, processed the same way.
@@ -93,18 +104,21 @@ The Python scripts in `python/` run from one working directory with three links:
 1. `01_water_mask_and_signed_distcoast.py`, `02_rasterize_vegmap.py`, `03_extract_station_site_variables.py`: Landsat water frequency, signed distance to the open coast, the rasterised NPS vegetation map, and station site variables.
 2. `build_flows_daily.py`, `extract_eden_grid_at_stations.py`, `eden_monthly_grids.py`, `eden_mean_grids.py`, `gridmet_prep.py`, `eden_daily.py`: daily structure flows, EDEN stage at stations and on the grid, and gridMET windows (2013–2025).
 3. `connectivity.py`, `conn_cv.py`, `basins.py`, `smooth_offshore_v3.py`: along-channel distance, channel density, flow basins traced up the EDEN water surface, least-cost distances, soft basin weights, and offshore smoothing.
-4. `build_station_feature_table.py`, `prep_v3_tables.py` (with `fillers.py`, `spatial_cv.py`): station-day feature tables. `veg_spectra_rows_L30.py` and `pack_intermediates.py` are needed only because `prep30.py` reads their outputs.
-5. `prep30.py`: the 30 m static predictors and coordinates (`static30.npy`, `px30_index.npy`, …). `classes30.py`: region and ecosystem class of each 30 m cell. `hpc/make_hpc_inputs.py`, `hpc/make_grid30.py`: the remaining HPC inputs.
+4. `build_station_feature_table.py`, `prep_v3_tables.py` (with `fillers.py`, `spatial_cv.py`): station-day feature tables.
+5. `prep30.py`: the 30 m static predictors and coordinates (`static30.npy`, `px30_index.npy`, …); `--spectra` also builds the vegetation composites of the deprecated two-step model (from `veg_spectra_rows_L30.py` and `pack_intermediates.py`). `classes30.py`: region and ecosystem class of each 30 m cell. `hpc/make_hpc_inputs.py`, `hpc/make_grid30.py`: the remaining HPC inputs.
 
-**4. Model** (`final_model/`)
-- Sea level: monthly mean sea level for NOAA stations 8724580, 8723970 and 8723214, downloaded from https://tidesandcurrents.noaa.gov to `SERVER/sea_level/noaa_monthly_mean_<id>.csv`.
-- Freshwater sites: DBHydro field specific conductance for project EVER (test 9, surface samples ≤ 1 m), converted with TEOS-10; site summary in `SERVER/model_experiments_2026-10-13/dbhydro_EVER_conductivity_station_summary.csv`. `fresh_features.py` builds the model inputs at the 13 sites with the same code as the maps (`onestep_maps.py`).
-- `harness.py`: loads the 2000–2025 station table, adds sea level and the spatial blocks, and runs the block CV.
-- `fit_final.py`: block CV of the final configuration, conformal half-widths (`q_levels.json`), the final fit on all station-days, and the compiled model.
+**4. Model** (`final_model/`; run in this order)
+1. `download_sea_level.py`: NOAA monthly mean sea level for Key West (8724580), Vaca Key (8723970) and Virginia Key (8723214) → `$ENP_DATA_ROOT/sea_level/`.
+2. `download_conductivity.py`: DBHydro field specific conductance (test 9), 2000–2025 → `$ENP_DATA_ROOT/dbhydro_conductivity/`.
+3. `fresh_sites.py`: surface samples without quality flags, converted to practical salinity at 25 °C (TEOS-10), averaged per station-day; selects the 13 freshwater sites (in the map domain, ≥ 24 sample days, > 0.3 km from a gauge).
+4. `fresh_features.py`: model inputs at the 13 sites on their sample days, with the same code as the maps (`onestep_maps.py`).
+5. `build_training_table.py`: the 2000–2025 station table with sea level and the 10 spatial blocks (`harness.load()`), plus the freshwater sites assigned to the nearest block.
+6. `fit_final.py`: block CV, conformal half-widths (`q_levels.json`), the final fit on all 355 156 station-days, and the compiled model (`m3_final.so`). Writes to the current folder.
+- `model_config.py`: the 56 predictors and the hyperparameters, used by every script that fits or applies the model. `harness.py`: data loading, block CV and skill metrics.
 - `gauge_events.py`, `gauge_trend_long_fn.py`: trends and high-salinity events at the gauges for the checks in Sect. 4.4.
-- `onestep_maps.py` (53 predictors, used by `fresh_features.py`) and `onestep_maps_final.py` (final model with sea level, used by the driver attribution) compute the model inputs at any 30 m cell and day. They read the HPC inputs from `final_model/in/` (a copy of `best_two_step/salinity30m/hpc_inputs/` plus `final_model_onestep.pkl`, `m3_final.so` and `msl_by_date.csv`). `fillers.py` is a copy of `python/fillers.py`.
+- `onestep_maps.py` (inputs only, used by `fresh_features.py`) and `onestep_maps_final.py` (final model, used by the driver attribution) compute the model inputs at any 30 m cell and day. `fillers.py` is a copy of `python/fillers.py`.
 
-**5. Maps on Bouchet** (`final_model/hpc/`; run from `~/enp_salinity/hpc`; `hpc/setup_bouchet.slurm` builds the `sal30` environment and the daily EDEN fields once)
+**5. Maps on Bouchet** (`final_model/hpc/`; run from `~/enp_salinity/hpc`; `hpc/setup_bouchet.slurm` builds the `sal30` environment and the daily EDEN fields once; see `hpc/README.md`). For a quick test, `ROWS=r0,r1` limits `daily30_onestep_hpc.py` to a band of rows.
 - `submit_final.sh`: `compile_final.slurm`, then `run_daily30_onestep.slurm` (309 monthly tasks of `daily30_onestep_hpc.py`) → `daily30m_onestep_final/`.
 - `submit_derive_final.sh`: `derive_final.py`, `reduce_monthly250.py` → monthly 30 m means, daily 250 m maps, and monthly 250 m means with 90 % bounds.
 - `submit_clim_final.sh`: `wetdays_final.py`, `climatology_final.py` → wet-day monthly means and the climatology.
@@ -118,6 +132,15 @@ The Python scripts in `python/` run from one working directory with three links:
 - `validation_final.py`: skill by station, region and period, and interval coverage.
 - Figures: `fig01_study_area.py` (uses helpers in `python/make_figures.py`), `fig_workflow.py`, `fig_validation.py`, `fig_stations.py`, `fig_surface_water_mask.py`, `fig_spatial.py`, `fig_temporal.py`, `fig_trends.py`, `fig_events.py`, `fig_drivers.py`.
 - Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes).
+
+### Reproducibility check (22 October 2026)
+
+From a fresh copy of this repository, with the server inputs:
+- `download_sea_level.py` returned the same monthly MSL as the series used for the model.
+- `fresh_sites.py` reproduced the conductivity station-day table exactly (271 115 station-days) and selected the same 13 sites; `fresh_features.py` and `build_training_table.py` reproduced the training table exactly.
+- `fit_final.py` reproduced the block-CV predictions, the interval half-widths, the skill metrics and the fitted model exactly (identical predictions).
+- `validation_final.py` reproduced the station, region and interval tables of the paper exactly.
+- One month of daily 30 m maps (May 2015, 200 rows, 14 million cell-days) from `daily30_onestep_hpc.py` and `mask_daily30.py` matched the released files in 99.99 % of cell-days; the rest differ by a median 0.1 psu (at most 1.9 psu), from floating-point differences between the Bouchet and local environments.
 
 ---
 
@@ -142,5 +165,4 @@ Kept in `deprecated/` for reference; not used for the manuscript or the released
 - `model_experiments_2026-10-13/`: the experiments that set the final configuration (training years, freshwater sites, sea level, weights).
 - `hindcast_released_model/`: hindcast evaluation of the earlier one-step model before 2013.
 - `rf_model/`, `exploratory/`: random-forest and other early models.
-- `superseded_data_prep/`: data-prep scripts replaced by newer sources (unsigned coast distance, elevatr elevation, gridMET resampled to 30 m).
 - `band_and_target_screening/`: Landsat band and salinity-target screening.

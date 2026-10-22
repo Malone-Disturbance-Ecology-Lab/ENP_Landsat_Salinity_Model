@@ -1,7 +1,8 @@
 """Group response curves of the final model: for each driver group, set all its predictors at each station-day to that
 station's own q-th percentile (q = 5..95) and average the predictions over sampled station-days by salinity zone."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import pickle, numpy as np, pandas as pd
-E = 'work/exp'; M = pickle.load(open('work/final/final_model_onestep.pkl', 'rb')); m = M['m3']; FE = M['F']
+E = f'{WORK}/exp'; M = pickle.load(open(f'{WORK}/final/final_model_onestep.pkl', 'rb')); m = M['m3']; FE = M['F']
 T = pd.read_parquet(f'{E}/T.parquet'); T = T[T.salinity.notna()].reset_index(drop=True)
 z = T.groupby('station').salinity.transform('mean'); T['zone'] = pd.cut(z, [-1, 5, 25, 99], labels=['< 5 psu', '5–25 psu', '> 25 psu'])
 MS = ['msl_1m', 'msl_3m', 'msl_12m']

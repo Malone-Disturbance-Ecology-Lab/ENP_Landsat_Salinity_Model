@@ -16,12 +16,8 @@ B = os.path.dirname(os.path.abspath(__file__)); IN = f'{B}/in'; WK = f'{B}/work'
 H, W = 3839, 4171; D30 = 0.00027092271166751034; LEFT, TOP = -81.51874748177192, 25.889645249658873; H2, W2 = 480, 521
 DAYS = pd.date_range('2000-04-01', '2025-12-31'); MONTHS = pd.date_range('2000-04-01', '2025-12-01', freq='MS'); MID = MONTHS + pd.Timedelta(days=14)
 NM, ND = len(MONTHS), len(DAYS)
-FM = pickle.load(open(f'{IN}/final_models.pkl', 'rb')); F3 = list(FM['m3'].feature_names_in_)
-try:
-    import tl2cgen; PRED = tl2cgen.Predictor(f'{B}/m3.so', nthread=int(os.environ.get('NTHREAD', '2')))
-    def pred(X): return PRED.predict(tl2cgen.DMatrix(X)).ravel()
-except Exception as e:
-    print('tl2cgen unavailable, sklearn predict:', e); pred = lambda X: FM['m3'].predict(X)
+from model_config import F0; F3 = list(F0)   # inputs only (used by fresh_features.py); predictions use onestep_maps_final.py
+def pred(X): raise RuntimeError('onestep_maps.py builds model inputs only; use onestep_maps_final.py for predictions')
 STK = json.load(open(f'{IN}/static30_keys.json')); STA = np.load(f'{IN}/static30.npy', mmap_mode='r')
 IDX = np.load(f'{IN}/px30_index.npy'); LL = np.load(f'{IN}/lonlat30.npy', mmap_mode='r'); UT = np.load(f'{IN}/utm30.npy', mmap_mode='r'); NP = len(IDX)
 DRV = pd.read_csv(f'{IN}/daily_drivers_1998_2025.csv', parse_dates=['date']).set_index('date')

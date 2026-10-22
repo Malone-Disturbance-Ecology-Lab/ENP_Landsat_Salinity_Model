@@ -1,18 +1,19 @@
 """Held-out (10-block spatial CV) validation of the final one-step model, 2000-2025: overall, by station, by region, by salinity class, intervals."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import json, numpy as np, pandas as pd
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
-C=pd.read_parquet('work/final/cv_predictions_final.parquet'); C=C[C.salinity.notna()].copy()
+U=f'{ROOT}'
+C=pd.read_parquet(f'{WORK}/final/cv_predictions_final.parquet'); C=C[C.salinity.notna()].copy()
 S=pd.read_csv(f'{U}/site_variables/station_site_variables.csv').set_index('station')
-F=pd.read_csv('fresh13_coords.csv').set_index('station').rename(columns={'lat':'latitude','lon':'longitude'})
+F=pd.read_csv(f'{WORK}/exp/fresh13_coords.csv').set_index('station').rename(columns={'lat':'latitude','lon':'longitude'})
 LL=pd.concat([S[['latitude','longitude']],F[['latitude','longitude']]])
-IDX=np.load('work/map/in/px30_index.npy'); REG=np.load(f'{U}/best_two_step/events_masked/in/region30.npy'); W=4171
+IDX=np.load(f'{WORK}/map/in/px30_index.npy'); REG=np.load(f'{U}/best_two_step/events_masked/in/region30.npy'); W=4171
 D30=0.00027092271166751034; LEFT,TOP=-81.51874748177192,25.889645249658873
 REGN=['Big Cypress','Shark River Slough','Taylor Slough','C-111','Gulf coastal waters','Florida Bay']
 def region(st):
     la,lo=LL.loc[st,['latitude','longitude']]; p=int(np.floor((TOP-la)/D30))*W+int(np.floor((lo-LEFT)/D30)); i=np.searchsorted(IDX,p)
     return REGN[REG[i]] if i<len(IDX) and IDX[i]==p and 0<=REG[i]<6 else 'outside'
 st=sorted(C.station.unique()); RG={s:region(s) for s in st}; C['region']=C.station.map(RG)
-Q=json.load(open('work/final/q_levels.json')); bins=np.array(Q['bins']); q=np.array(Q['q'])
+Q=json.load(open(f'{WORK}/final/q_levels.json')); bins=np.array(Q['bins']); q=np.array(Q['q'])
 C['hw']=q[np.clip(np.digitize(C.pred_cv,bins[1:-1]),0,3)]; C['cov']=(C.salinity-C.pred_cv).abs()<=C.hw
 def kge(o,p):
     r=np.corrcoef(o,p)[0,1]; return 1-np.sqrt((r-1)**2+(p.std()/o.std()-1)**2+(p.mean()/o.mean()-1)**2)

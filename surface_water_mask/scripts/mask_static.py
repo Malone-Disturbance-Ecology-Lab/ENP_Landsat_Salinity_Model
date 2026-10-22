@@ -3,10 +3,11 @@
 - static class (uint8): 3 permanent water | 9 never wet (upland / built) | 10 EDEN-assessed (daily wet/dry) |
   4 tidal/intermittent coastal wetland (outside EDEN) | 5 not assessed (other wetland outside EDEN) | 255 outside domain
 - eden_rc30.npy: EDEN 400 m (row, col) of each domain cell, for daily stage lookup"""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, rasterio, os, sys
 from rasterio.warp import reproject, Resampling
 from rasterio.transform import Affine
-U = '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'; M = 'work/map/in'; O = 'out'
+U = f'{ROOT}'; M = f'{WORK}/map/in'; O = 'out'
 DEMD = f'{U}/EDEN_DEMs_With_Uncertainty_Treatment_v2/EDEN_DEMs_With_Uncertainty_Treatment_v2/10m_DEMs'
 H, W = 3839, 4171; D30 = 0.00027092271166751034; LEFT, TOP = -81.51874748177192, 25.889645249658873
 T30 = Affine(D30, 0, LEFT, 0, -D30, TOP)

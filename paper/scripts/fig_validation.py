@@ -1,11 +1,12 @@
 """Technical validation of the final model (held out in space, 2000-2025): (a) density of observed vs held-out, (b) station r and KGE by region,
 (c) skill by period, (d) 90 % interval coverage by predicted level (cross-calibrated by block)."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 INK='#3d3d3a'; MUTED='#77756e'; GRID='#e6e5df'; BLUE='#2a78d6'; ORANGE='#eb6834'
 plt.rcParams.update({'font.size':7.5,'axes.edgecolor':GRID,'text.color':INK,'axes.labelcolor':INK,'xtick.color':MUTED,'ytick.color':MUTED,'axes.titlelocation':'left','axes.titlesize':8})
-C=pd.read_parquet('work/final/cv_predictions_final.parquet'); C=C[C.salinity.notna()&~C.fresh_site]
-ST=pd.read_csv('station_skill_final.csv'); ST=ST[~ST.fresh]; P=pd.read_csv('work/final/gauge/table4_skill_by_period_final.csv'); V=pd.read_csv('interval_coverage_crosscal.csv',index_col=0).iloc[:,0]
+C=pd.read_parquet(f'{WORK}/final/cv_predictions_final.parquet'); C=C[C.salinity.notna()&~C.fresh_site]
+ST=pd.read_csv('station_skill_final.csv'); ST=ST[~ST.fresh]; P=pd.read_csv(f'{WORK}/final/gauge/table4_skill_by_period_final.csv'); V=pd.read_csv('interval_coverage_crosscal.csv',index_col=0).iloc[:,0]
 fig,ax=plt.subplots(2,2,figsize=(7.09,6.2)); plt.subplots_adjust(hspace=0.5,wspace=0.42)
 a=ax[0,0]; h=a.hexbin(C.salinity,C.pred_cv,gridsize=70,extent=(0,60,0,60),bins='log',cmap='Blues',mincnt=1,lw=0)
 a.plot([0,60],[0,60],color=INK,lw=0.8,ls='--'); e=C.pred_cv-C.salinity; r2=1-(e**2).sum()/((C.salinity-C.salinity.mean())**2).sum()

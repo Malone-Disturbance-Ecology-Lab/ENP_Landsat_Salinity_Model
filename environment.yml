@@ -1,0 +1,24 @@
+# Python environment for the final workflow.
+# scikit-learn must be 1.8.0: the fitted model (final_model_onestep.pkl) is a pickled HistGradientBoostingRegressor.
+# The other versions are those the model was fitted and the analyses run with (October 2026).
+# Create with:  conda env create -f environment.yml   (or: pip install -r requirements.txt)
+name: enp-salinity
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - numpy=2.5.3
+  - pandas=3.0.5
+  - scipy=1.18.1
+  - scikit-learn=1.8.0
+  - scikit-image=0.26.0
+  - rasterio=1.5.2
+  - pyproj=3.8.0
+  - pyarrow=26.0.0
+  - matplotlib=3.11.2
+  - gsw=3.6.23
+  - pyshp
+  - pip
+  - pip:
+      - treelite==4.7.2
+      - tl2cgen==1.0.0

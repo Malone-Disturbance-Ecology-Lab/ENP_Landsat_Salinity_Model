@@ -1,12 +1,13 @@
 """Spatial patterns, final model with surface-water mask, 2000-2025: climatology maps and Venice-system areas."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, rasterio, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, ListedColormap
 INK='#3d3d3a'; MUTED='#77756e'; GRID='#e6e5df'
 plt.rcParams.update({'font.size':7.5,'axes.edgecolor':GRID,'text.color':INK,'axes.labelcolor':INK,'xtick.color':MUTED,'ytick.color':MUTED,'axes.titlelocation':'left','axes.titlesize':8})
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model/best_two_step'
+U=f'{ROOT}/best_two_step'
 with rasterio.open(f'{U}/climatology_final/ENP_salinity30m_climatology_2000_2025.tif') as s: B=s.read().astype('float32'); B[B<0]=np.nan; B/=10
 mean,dry,wet,may,octo,sd,pw,p95=B
-IDX=np.load('work/map/in/px30_index.npy'); ECO=np.load(f'{U}/events_masked/in/eco30.npy'); REG=np.load(f'{U}/events_masked/in/region30.npy')
+IDX=np.load(f'{WORK}/map/in/px30_index.npy'); ECO=np.load(f'{U}/events_masked/in/eco30.npy'); REG=np.load(f'{U}/events_masked/in/region30.npy')
 A=0.000818
 # ---- statistics
 cls=[0,0.5,5,18,30,40,99]; lab=['fresh (< 0.5)','oligohaline (0.5–5)','mesohaline (5–18)','polyhaline (18–30)','euhaline (30–40)','hypersaline (> 40)']

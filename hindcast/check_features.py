@@ -1,5 +1,6 @@
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import pandas as pd, numpy as np, pickle, warnings; warnings.filterwarnings('ignore')
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
+U=f'{ROOT}'
 T=pd.read_parquet(f'{U}/dbhydro_hindcast/features/station_features_2000_2025.parquet')
 FM=pickle.load(open(f'{U}/best_two_step/salinity30m/hpc_inputs/final_models.pkl','rb')); m3=FM['m3']; F=list(m3.feature_names_in_)
 print('missing features:',[f for f in F if f not in T])

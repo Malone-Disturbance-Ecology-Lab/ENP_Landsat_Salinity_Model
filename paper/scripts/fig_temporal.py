@@ -1,10 +1,11 @@
 """Temporal patterns, final model with surface-water mask, 2000-2025: (a) seasonal cycle by ecosystem, (b) annual mean anomaly by region and year,
 (c) May salinity vs December-May rainfall by region, (d) share of freshwater-marsh cells with surface water in April."""
+import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 INK='#3d3d3a'; MUTED='#77756e'; GRID='#e6e5df'; CAT=['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300']
 plt.rcParams.update({'font.size':7.5,'axes.edgecolor':GRID,'text.color':INK,'axes.labelcolor':INK,'xtick.color':MUTED,'ytick.color':MUTED,'axes.titlelocation':'left','axes.titlesize':8})
-U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model/best_two_step/long_masked_final/results'
+U=f'{ROOT}/best_two_step/long_masked_final/results'
 M=pd.read_csv(f'{U}/monthly_series_by_group_2000_2025.csv',parse_dates=['month']); M['yr']=M.month.dt.year; M['mo']=M.month.dt.month
 DR=pd.read_csv('annual_drivers.csv',index_col=0)
 ECO=['Freshwater marsh & prairie','Swamp forest & scrub','Salt marsh','Mangrove','Inland & estuarine water','Open bay']
