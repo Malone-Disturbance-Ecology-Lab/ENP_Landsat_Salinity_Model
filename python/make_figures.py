@@ -375,7 +375,7 @@ if __name__ == '__main__':
     if 'doc' in sets:
         here = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, here)
         try:
-            import runpy; sys.argv = [f'{here}/make_figures_doc.py'] + [str(f) for f in ARGS.figs]
-            runpy.run_path(f'{here}/make_figures_doc.py', run_name='__main__')
+            import runpy; sys.argv = [f'{here}/../deprecated/two_step_hls_model/python/make_figures_doc.py'] + [str(f) for f in ARGS.figs]
+            runpy.run_path(f'{here}/../deprecated/two_step_hls_model/python/make_figures_doc.py', run_name='__main__')
         except (FileNotFoundError, OSError) as e:
             print('document figures skipped:', e, '\n  (they need the intermediate model files listed in make_figures_doc.py; run from the folder that holds them)')

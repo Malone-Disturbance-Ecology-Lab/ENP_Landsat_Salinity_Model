@@ -3,7 +3,7 @@ Reuses the drawing helpers of salinity30m/scripts/make_figures.py. Usage: python
 import os, sys, numpy as np, pandas as pd
 ROOT = sys.argv[1] if len(sys.argv) > 1 else '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'
 OUT = f'{ROOT}/best_two_step/paper_final'
-os.environ['ENP_DATA_ROOT'] = ROOT; sys.path.insert(0, f'{ROOT}/best_two_step/salinity30m/scripts')
+os.environ['ENP_DATA_ROOT'] = ROOT; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'python'))
 import make_figures as M; M.OUT = OUT
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D

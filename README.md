@@ -70,7 +70,7 @@ Requirements: R (data download and harmonisation); Python ≥ 3.10 with numpy, p
 
 | `work/` subfolder | holds |
 |---|---|
-| `work/map/` (+ `in/`) | `final_model/onestep_maps.py` and the 30 m inputs from `best_two_step/salinity30m/hpc_inputs/` |
+| `work/map/` | working folder for `fresh_features.py` |
 | `work/exp/` | the station tables built by `final_model/harness.py` and `fresh_features.py` |
 | `work/final/` | the fitted model and CV predictions (copied to `best_two_step/onestep_final/`) |
 | `work/drivers/`, `work/mask/`, `work/trend/` | intermediate files of the driver analysis, the mask and the masked trends |
@@ -102,6 +102,7 @@ The Python scripts in `python/` run from one working directory with three links:
 - `harness.py`: loads the 2000–2025 station table, adds sea level and the spatial blocks, and runs the block CV.
 - `fit_final.py`: block CV of the final configuration, conformal half-widths (`q_levels.json`), the final fit on all station-days, and the compiled model.
 - `gauge_events.py`, `gauge_trend_long_fn.py`: trends and high-salinity events at the gauges for the checks in Sect. 4.4.
+- `onestep_maps.py` (53 predictors, used by `fresh_features.py`) and `onestep_maps_final.py` (final model with sea level, used by the driver attribution) compute the model inputs at any 30 m cell and day. They read the HPC inputs from `final_model/in/` (a copy of `best_two_step/salinity30m/hpc_inputs/` plus `final_model_onestep.pkl`, `m3_final.so` and `msl_by_date.csv`). `fillers.py` is a copy of `python/fillers.py`.
 
 **5. Maps on Bouchet** (`final_model/hpc/`; run from `~/enp_salinity/hpc`; `hpc/setup_bouchet.slurm` builds the `sal30` environment and the daily EDEN fields once)
 - `submit_final.sh`: `compile_final.slurm`, then `run_daily30_onestep.slurm` (309 monthly tasks of `daily30_onestep_hpc.py`) → `daily30m_onestep_final/`.
@@ -116,7 +117,6 @@ The Python scripts in `python/` run from one working directory with three links:
 **7. Manuscript** (`paper/scripts/`)
 - `validation_final.py`: skill by station, region and period, and interval coverage.
 - Figures: `fig01_study_area.py` (uses helpers in `python/make_figures.py`), `fig_workflow.py`, `fig_validation.py`, `fig_stations.py`, `fig_surface_water_mask.py`, `fig_spatial.py`, `fig_temporal.py`, `fig_trends.py`, `fig_events.py`, `fig_drivers.py`.
-- Climatology and wet-day products: `climatology_final.py`, `wetdays_final.py` (local versions of the HPC scripts).
 - Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes).
 
 ---

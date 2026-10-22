@@ -2,9 +2,10 @@
 Days: the 15th of every month, 2000-04..2025-12 (309 days). For each group G the group's predictors are replaced at each node by
 that node's mean over the 309 days, and the drop in the node's temporal variance of predicted salinity is G's contribution."""
 import os, sys, pickle, time, numpy as np, pandas as pd
-os.environ['MODEL_PKL'] = 'work/final/final_model_onestep.pkl'; os.environ['MODEL_SO'] = 'work/final/m3_final.so'
-sys.path.insert(0, 'work/map'); os.chdir('work/map')
-import onestep_maps_v3 as om
+os.environ['MODEL_PKL'] = os.path.abspath('work/final/final_model_onestep.pkl'); os.environ['MODEL_SO'] = os.path.abspath('work/final/m3_final.so')
+OUTD = os.path.abspath('work/drivers'); os.makedirs(OUTD, exist_ok=True)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'final_model'))
+import onestep_maps_final as om   # inputs in final_model/in/ (copy of hpc_inputs)
 F = om.F3; C = {c: i for i, c in enumerate(F)}
 G = {'water level': ['stage_cell_cm30', 'stage_5km_cm30', 'stage_5km_cm90'],
      'flows': ['SRS90', 'TSC11190', 'src_flow90_w'],
@@ -22,7 +23,7 @@ for y in sorted(set(days.year)):
     E, ed = om.eden_year(y); ei = pd.Index(ed)
     for k in np.flatnonzero(days.year == y): X[k] = om.features(st, wt, days[k], E, ei.get_loc(days[k]), n)
     print(y, round(time.time() - t0), 's', flush=True)
-np.save('work/drivers/node_rc.npy', np.stack([ii, jj]))
+np.save(f'{OUTD}/node_rc.npy', np.stack([ii, jj]))
 m = pickle.load(open(os.environ['MODEL_PKL'], 'rb'))['m3']
 def pred(A): return np.clip(m.predict(A.reshape(-1, len(F))), 0, None).reshape(len(days), n).astype('float32')
 def predc(A): return np.clip(m.predict(A.reshape(-1, len(F))), 0, None).reshape(A.shape[0], A.shape[1]).astype('float32')
@@ -33,5 +34,5 @@ for a in range(0, n, 4000):
         A = Xc.copy(); idx = [C[c] for c in cols]; A[:, :, idx] = Xc[:, :, idx].mean(0, keepdims=True); out[f'var_drop_{g}'][a:b] = V0 - predc(A).var(0)
     print('chunk', a, round(time.time() - t0), 's', flush=True)
 for g in G: print(g, 'median share', round(float(np.median(out[f'var_drop_{g}'] / np.maximum(out['var_full'], 1e-6))), 3))
-np.savez_compressed('work/drivers/node_attribution.npz', days=days.values.astype('datetime64[D]').astype(str), **out)
+np.savez_compressed(f'{OUTD}/node_attribution.npz', days=days.values.astype('datetime64[D]').astype(str), **out)
 print('done', round(time.time() - t0), 's')

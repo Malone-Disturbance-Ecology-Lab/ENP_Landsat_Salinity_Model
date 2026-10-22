@@ -1,7 +1,7 @@
 """Grouped permutation importance of the final model, held out in space (10-block CV): for each block, fit on the other nine,
 then shuffle one predictor group jointly across the held-out rows (3 repeats) and record the rise in RMSE and fall in R2,
 overall and by station salinity zone (mean < 5, 5-25, > 25 psu)."""
-import sys, numpy as np, pandas as pd, pickle, time; sys.path.insert(0, 'work/exp')
+import sys, numpy as np, pandas as pd, pickle, time; sys.path.insert(0, __import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), '..', '..', 'final_model'))
 from harness import HGB, PRM, F0
 E = 'work/exp'; MS = ['msl_1m', 'msl_3m', 'msl_12m']; FE = F0 + MS
 TA = pd.read_parquet(f'{E}/TA_index.parquet'); T = pd.read_parquet(f'{E}/T.parquet'); Fr = pd.read_parquet(f'{E}/fresh_station_features.parquet')
