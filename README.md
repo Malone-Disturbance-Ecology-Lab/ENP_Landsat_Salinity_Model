@@ -130,6 +130,7 @@ The Python scripts in `python/` run from one working directory with three links:
 
 **7. Manuscript** (`paper/scripts/`)
 - `validation_final.py`: skill by station, region and period, and interval coverage.
+- `diagnostics_review.py`: checks quoted in Sects. 3.3–4.4 (sonde share, missing anchor days, skill vs distance to anchors, residual autocorrelation, bias by era).
 - `interval_crosscal.py`: cross-calibrated interval coverage (each block scored with half-widths from the other nine blocks; Sect. 4.2).
 - Figures: `fig01_study_area.py` (uses helpers in `python/make_figures.py`), `fig_workflow.py`, `fig_validation.py`, `fig_stations.py`, `fig_surface_water_mask.py`, `fig_spatial.py`, `fig_temporal.py`, `fig_trends.py`, `fig_events.py`, `fig_drivers.py`.
 - Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes).
