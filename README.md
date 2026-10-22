@@ -85,7 +85,7 @@ All inputs are resampled to the native HLS L30 30 m grid, so output pixels match
 | folder or file | contents |
 |---|---|
 | `monthly/ENP_salinity30m_monthly_YYYY_MM.tif` | monthly mean salinity, 156 files, psu × 10 (int16, nodata −1) |
-| `hpc/`, `hpc_inputs/` | Grace SLURM array job that writes the full-model **daily** 30 m archive (`YYYY/ENP_salinity30m_daily_YYYY_MM.tif`, about 11–15 GB); see `hpc/README_HPC.md` |
+| `hpc/`, `hpc_inputs/` | Bouchet SLURM array job that writes the full-model **daily** 30 m archive (`YYYY/ENP_salinity30m_daily_YYYY_MM.tif`, about 11–15 GB); see `hpc/README_HPC.md` |
 | `change30/` | 30 m region/ecosystem summaries, trends (annual means and monthly anomalies), high-salinity events, station checks |
 | `figures/` | Figures 1–7 of the methods/results document (`make_figures.py --set doc`) |
 | `figures/manuscript/` | Figures 1–7 of the *Scientific Data* manuscript, PNG and PDF at 300 dpi (`make_figures.py --set ms`) |
@@ -233,7 +233,7 @@ Run order:
     - The manuscript set reads only released files: the 30 m monthly GeoTIFFs, the class raster, the 250 m monthly means, the held-out predictions (`timeseries/station_daily_model_vs_gauge.csv.gz`), station metrics and the `change30/` tables. The 90% intervals are rebuilt from the held-out predictions (split-conformal half-widths 4.7, 10.6, 11.7, 6.0 psu by predicted level).
     - `--set doc` runs `make_figures_doc.py`, which makes the methods/results document figures. It needs the intermediate model files (`best_two_step_oof.pkl`, `px30_index.npy`, `map30/`, `daily_maps/median_int16.npy`) in the working directory.
     - Requires numpy, pandas, scipy, matplotlib and rasterio.
-33. `hpc/daily30_hpc.py` + `hpc/run_daily30.slurm`: the full-model daily 30 m archive on Grace, one array task per month (see `hpc/README_HPC.md`).
+33. `hpc/daily30_hpc.py` + `hpc/run_daily30.slurm`: the full-model daily 30 m archive on Bouchet, one array task per month (see `hpc/README_HPC.md`).
 
 ---
 
@@ -248,5 +248,6 @@ Kept in `deprecated/` for reference; they are not part of the current model.
   - `01_download_elevation_slope`: elevatr elevation, unreliable over water and mangrove (5–8 m at coastal stations). Not used.
   - `01_download_meteorology` and `02_reformat_meteorology`: gridMET resampled to 30 m with terra. Replaced by native 4 km gridMET, which carries the same information without about 130 GB of rasters.
 - `deprecated/band_and_target_screening/`: band-screening and salinity-target analyses (`03b_build_salinity_targets.R`, `08_screen_salinity_bands.R`, results notes and tests). They showed that Landsat bands add little *temporal* skill at a site; that finding led to using vegetation spectra for the site mean instead.
+- `deprecated/superseded_figures/figs30.py`: the first 30 m figure script. Replaced by `python/make_figures.py`.
 
 Intermediate Python model versions (v1–v3 one-step GBMs, connectivity and basin CV, the conformal-by-zone maps) are not in this repository. Their results remain on the server in their original folders (`spatial_cv/`, `connectivity_uncertainty/`, `basins_monthly*/`, `two_step_model/`).

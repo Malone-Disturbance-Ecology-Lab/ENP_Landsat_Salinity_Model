@@ -1,4 +1,4 @@
-# Daily 30 m salinity on HPC (Grace)
+# Daily 30 m salinity on HPC (Bouchet)
 
 This produces the full-model **daily** salinity archive on the native HLS/Landsat 30 m grid, covering 2013-01-01 to 2025-12-31.
 
@@ -28,7 +28,9 @@ Static layers are native 30 m: distance to coast, water frequency, connectivity,
 
 ## 1. Prepare `input_dir` (once)
 
-Copy `best_two_step/salinity30m/hpc_inputs/` from the lab server to Grace. It contains:
+**On Bouchet:** after copying the folders, run `cd ~/enp_salinity/hpc && sbatch setup_bouchet.slurm`. It builds the `sal30` conda env, rebuilds the split files, makes the grid index, checks the compiled models and builds the daily EDEN fields (the steps below). `eden_daily.py` and `fillers.py` are copied into `hpc/` for this.
+
+Copy `best_two_step/salinity30m/hpc/`, `hpc_inputs/`, `data/EDEN_GRIDS_Q/` and `site_variables/ENP_WaterFrequency_L30.tif` from the lab server to Bouchet (`transfer-bouchet.ycrc.yale.edu`, on campus or VPN), e.g. into `~/enp_salinity/`. Home is 125 GiB, enough for the inputs (~11 GB with daily EDEN) and outputs (~15 GB); `~/scratch_pi_<netid>` is purged after 30 days. It contains:
 
 | file | content |
 |---|---|
@@ -79,3 +81,17 @@ sbatch run_daily30.slurm           # array 0-155, one month per task
 - Each file has one band per day. For example, `rasterio.open('OUT/2020/ENP_salinity30m_daily_2020_05.tif').count` should be 31.
 - The mean of a month's bands should match the 30 m monthly map for that month. A test on May 2020, rows 1500–1531 (76,055 cells), gave mean absolute difference 0.04 psu (95th percentile 0.1 psu, r = 1.000).
 - `ROWS=r0,r1` runs a row subset for quick tests, e.g. `ROWS=1500,1532 TILE_ROWS=32 python daily30_hpc.py 88 IN OUT`.
+
+## 4. Daily 30 m hindcast, 2000-04 → 2012-12 (one-step model, no spectra)
+
+`daily30_onestep_hpc.py` + `run_daily30_onestep.slurm` run the one-step model m3 (no vegetation spectra) at every 30 m cell for every day. Array index 0 = 2000-04 … 152 = 2012-12. Indices 153–308 (2013-01 … 2025-12) are also allowed, which gives a one-step daily record for 2000–2025 with no model switch at 2013.
+
+- Output: `daily30m_onestep/YYYY/ENP_salinity30m_onestep_daily_YYYY_MM.tif`. Each file has one band per day; values are int16 psu×10; −1 = no data.
+- Inputs: the same `hpc_inputs/` as above, plus three files from `dbhydro_hindcast/`:
+  - `features/gridmet_filled_1998_2013.npz`
+  - `features/daily_drivers_1998_2025.csv`
+  - `eden_anyv.npy`
+
+  The EDEN quarterly files for 2000–2012 also go in `data/EDEN_GRIDS_Q/`. Months from 2013 on use `gridmet_filled.npz`.
+- Cost: a test on May 2005 rows 2000–2040 (89,123 cells × 31 days) took 28 s of prediction on 2 threads. A full month is therefore about 40 min on 2 threads, and less with 4. Each task has 4 CPUs, 24 GB and a 4 h limit.
+- Check (May 2005, rows 1500–1563): at the 250 m nodes the daily 30 m values equal the 250 m hindcast maps exactly (difference 0.0 psu). On the 15th they match the stored 30 m full-model run within rounding (mean 0.02 psu).
