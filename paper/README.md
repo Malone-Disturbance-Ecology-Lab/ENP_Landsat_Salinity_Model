@@ -9,8 +9,8 @@ Fig02_workflow.png (fig_workflow.py), Fig03_validation.png (fig_validation.py), 
 Fig06_spatial_patterns.png (fig_spatial.py), Fig07_temporal_patterns.png (fig_temporal.py), Fig08_trends.png (fig_trends.py),
 Fig09_events.png (fig_events.py). Fig 1 (study area) and Fig 5 (surface-water mask) are unchanged from earlier drafts.
 
-Statistics: station_skill_final.csv, skill_by_region_final.csv, interval_coverage_final.csv, interval_coverage_crosscal.csv
-(validation_final.py); area_by_salinity_class.csv, climatology_by_group.csv (fig_spatial.py); annual_drivers.csv,
+Statistics: station_skill_final.csv, skill_by_region_final.csv, interval_coverage_final.csv (validation_final.py);
+interval_coverage_crosscal.csv, interval_coverage_crosscal_detail.csv (interval_crosscal.py); area_by_salinity_class.csv, climatology_by_group.csv (fig_spatial.py); annual_drivers.csv,
 interannual_driver_correlations.csv. Trend/event/gauge tables are in long_masked_final/results/.
 Products made for this version: climatology_final/ (climatology_final.py) and monthly30m_wetdays/ for 2013–2025 rebuilt from
 daily30m_onestep_final/ (wetdays_final.py); the earlier 2013–2025 wet-day files from the HLS product are in superseded_hls_wetdays_2013_2025/.

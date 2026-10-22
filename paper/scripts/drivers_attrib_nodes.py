@@ -18,6 +18,8 @@ assert sum(len(v) for v in G.values()) == 29, sum(len(v) for v in G.values())
 dom = np.zeros(om.H * om.W, bool); dom[om.IDX] = True; dom = dom.reshape(om.H, om.W)
 ii, jj = np.nonzero(dom[4::8, 4::8][:om.H2, :om.W2]); keep = (ii % 2 == 0) & (jj % 2 == 0); ii, jj = ii[keep], jj[keep]; pos = np.searchsorted(om.IDX, (ii * 8 + 4) * om.W + (jj * 8 + 4))
 st = np.ascontiguousarray(np.asarray(om.STA[:, pos]).T); wt = om.weights(om.LL[0][pos], om.LL[1][pos], om.UT[0][pos], om.UT[1][pos]); n = len(pos)
+# 15th of each month, May 2000 - Dec 2025 (308 days; freq='MS' starts at 1 May, so April 2000 is not included).
+# These are the days used for Fig. 10 / Sect. 3.7 -- keep as is to reproduce the published attribution.
 days = pd.date_range('2000-04-15', '2025-12-15', freq='MS') + pd.Timedelta(days=14)
 X = np.empty((len(days), n, len(F)), 'float32'); t0 = time.time()
 for y in sorted(set(days.year)):

@@ -125,11 +125,12 @@ The Python scripts in `python/` run from one working directory with three links:
 - `submit_long_final.sh`: `long_masked_hpc.py` (75 tiles), `long_masked_reduce.py` → masked trends, high-salinity events, region and ecosystem tables, station series.
 
 **6. Surface-water mask** (`surface_water_mask/`)
-- `scripts/mask_static.py`: static classes and 30 m DEM bounds. `scripts/wetdry30_hpc.py` with `run_wetdry30.slurm`: daily codes, 309 monthly tasks. `scripts/validate_gauges.py`: comparison with EDEN gauge dry flags.
+- `scripts/mask_static.py`: static classes and 30 m DEM bounds (lowest 10 m elevation in each 30 m cell, plus the int16 inputs for the HPC run). `scripts/wetdry30_hpc.py` with `run_wetdry30.slurm`: daily codes, 309 monthly tasks. `scripts/validate_gauges.py`: comparison with EDEN gauge dry flags.
 - `apply_mask/mask_daily30.py` (`run_batch.sh` runs it in parallel): writes the released masked daily files.
 
 **7. Manuscript** (`paper/scripts/`)
 - `validation_final.py`: skill by station, region and period, and interval coverage.
+- `interval_crosscal.py`: cross-calibrated interval coverage (each block scored with half-widths from the other nine blocks; Sect. 4.2).
 - Figures: `fig01_study_area.py` (uses helpers in `python/make_figures.py`), `fig_workflow.py`, `fig_validation.py`, `fig_stations.py`, `fig_surface_water_mask.py`, `fig_spatial.py`, `fig_temporal.py`, `fig_trends.py`, `fig_events.py`, `fig_drivers.py`.
 - Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes).
 
@@ -139,7 +140,8 @@ From a fresh copy of this repository, with the server inputs:
 - `download_sea_level.py` returned the same monthly MSL as the series used for the model.
 - `fresh_sites.py` reproduced the conductivity station-day table exactly (271 115 station-days) and selected the same 13 sites; `fresh_features.py` and `build_training_table.py` reproduced the training table exactly.
 - `fit_final.py` reproduced the block-CV predictions, the interval half-widths, the skill metrics and the fitted model exactly (identical predictions).
-- `validation_final.py` reproduced the station, region and interval tables of the paper exactly.
+- `validation_final.py` reproduced the station, region and interval tables of the paper exactly; `interval_crosscal.py` reproduced the cross-calibrated coverage (89.5 %, fresh sites 97.8 %, 9 stations below 70 %).
+- `mask_static.py` reproduced the released minimum-elevation DEMs and int16 mask inputs cell for cell.
 - One month of daily 30 m maps (May 2015, 200 rows, 14 million cell-days) from `daily30_onestep_hpc.py` and `mask_daily30.py` matched the released files in 99.99 % of cell-days; the rest differ by a median 0.1 psu (at most 1.9 psu), from floating-point differences between the Bouchet and local environments.
 
 ---

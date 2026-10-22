@@ -1,5 +1,7 @@
 """Static 30 m layers for the surface-water mask (HLS/Landsat 30 m grid, EPSG:4326, 3839 x 4171).
-- dem30_{best,lower,upper}_cm.npy: EDEN DEMs v2 (Simons et al. 2024/2025, doi:10.5066/P1XTHZ7D), 10 m -> 30 m MINIMUM (lowest 10 m point in the 30 m cell; 'any surface water in the cell'), cm NAVD88; 30 m means kept as dem30_*_cm.npy
+- dem30min_{best,lower,upper}_cm.npy: EDEN DEMs v2 (Simons et al. 2024/2025, doi:10.5066/P1XTHZ7D), 10 m -> 30 m MINIMUM
+  (lowest 10 m point in the 30 m cell; 'any surface water in the cell'), cm NAVD88 -- used by the mask.
+  The 30 m means are also written (dem30_{best,lower,upper}_cm.npy) for reference only.
 - static class (uint8): 3 permanent water | 9 never wet (upland / built) | 10 EDEN-assessed (daily wet/dry) |
   4 tidal/intermittent coastal wetland (outside EDEN) | 5 not assessed (other wetland outside EDEN) | 255 outside domain
 - eden_rc30.npy: EDEN 400 m (row, col) of each domain cell, for daily stage lookup"""
@@ -14,14 +16,20 @@ T30 = Affine(D30, 0, LEFT, 0, -D30, TOP)
 IDX = np.load(f'{M}/px30_index.npy'); UT = np.load(f'{M}/utm30.npy')
 dom = np.zeros(H * W, bool); dom[IDX] = True
 for k in ['Best', 'Lower', 'Upper']:
-    if os.path.exists(f'{O}/dem30_{k.lower()}_cm.npy'): continue
+    outs = {'dem30min': Resampling.min, 'dem30': Resampling.average}   # min = what the mask uses
+    if all(os.path.exists(f'{O}/{p}_{k.lower()}_cm.npy') for p in outs): continue
     with rasterio.open(f'{DEMD}/EDEN_10m_{k}_Elevation_v2.tif') as r:
         a = r.read(1).astype('float32'); nd = r.nodata; a[(a == nd) | (a <= -9000) | (a >= 30000)] = np.nan
-        dst = np.full((H, W), np.nan, 'float32')
-        reproject(a, dst, src_transform=r.transform, src_crs=r.crs.to_epsg() and 'EPSG:6346' or r.crs, src_nodata=np.nan,
-                  dst_transform=T30, dst_crs='EPSG:4326', dst_nodata=np.nan, resampling=Resampling.average)
-    np.save(f'{O}/dem30_{k.lower()}_cm.npy', dst); print(k, np.nanmin(dst), np.nanmedian(dst), np.nanmax(dst), int(np.isfinite(dst).sum()), flush=True); del a
+        for p, rs in outs.items():
+            dst = np.full((H, W), np.nan, 'float32')
+            reproject(a, dst, src_transform=r.transform, src_crs=r.crs.to_epsg() and 'EPSG:6346' or r.crs, src_nodata=np.nan,
+                      dst_transform=T30, dst_crs='EPSG:4326', dst_nodata=np.nan, resampling=rs)
+            np.save(f'{O}/{p}_{k.lower()}_cm.npy', dst); print(p, k, np.nanmin(dst), np.nanmedian(dst), np.nanmax(dst), int(np.isfinite(dst).sum()), flush=True)
+    del a
 B, L, Up = [np.load(f'{O}/dem30min_{k}_cm.npy') for k in ('best', 'lower', 'upper')]
+# compact HPC inputs for wetdry30_hpc.py: rounded minimum DEMs, int16 cm, nodata -32768
+for k, v in (('lower', L), ('upper', Up)):
+    np.save(f'{O}/dem30_{k}_cm_int16.npy', np.where(np.isfinite(v), np.round(v), -32768).astype('int16'))
 # EDEN 400 m cell of each domain cell (cell centres at 463400 + 400 c, 2790200 + 400 r; rows increase northward)
 anyv = np.load(f'{M}/eden_anyv.npy'); EH, EW = anyv.shape
 rr = np.round((UT[1] - 2790200) / 400).astype(int); cc = np.round((UT[0] - 463400) / 400).astype(int)
