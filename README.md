@@ -58,7 +58,7 @@ Reading the files: GDAL-based tools (QGIS, R `terra`, Python `rasterio`/`rioxarr
 | `final_model/hpc/`, `hpc/` | 5 | Bouchet (Yale) SLURM jobs: compile the model, daily 30 m maps, 250 m and monthly products, climatology, masked trends and events |
 | `surface_water_mask/` | 6 | daily wet/dry mask, gauge validation, and the script that writes the masked daily files |
 | `paper/` | 7 | figure, statistics and model-driver scripts for the manuscript |
-| `docs/` | – | README of the derived products |
+| `docs/` | – | README of the derived products; project notes on the manuscript |
 | `appeears_landsat_lookup/` | – | HLS Fmask lookup tables |
 | `deprecated/` | – | superseded models and analyses |
 
@@ -138,6 +138,7 @@ DBHydro (South Florida Water Management District); EDEN v3 water surfaces and ED
 
 Kept in `deprecated/` for reference; not used for the manuscript or the released products.
 - `two_step_hls_model/`: the September 2026 two-step model (site mean from HLS vegetation spectra plus a daily departure, blended with a one-step model) for 2013–2025, its 250 m and 30 m maps, analyses and HPC job. It was replaced by the single model above, which covers 2000–2025 without spectra.
+- `released_onestep_2026-10-10/`: the earlier one-step model's daily 30 m HPC job (2013–2025 training), replaced by `final_model/hpc/`.
 - `model_experiments_2026-10-13/`: the experiments that set the final configuration (training years, freshwater sites, sea level, weights).
 - `hindcast_released_model/`: hindcast evaluation of the earlier one-step model before 2013.
 - `rf_model/`, `exploratory/`: random-forest and other early models.
