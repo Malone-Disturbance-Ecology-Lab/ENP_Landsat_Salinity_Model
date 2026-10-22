@@ -14,16 +14,17 @@ This repository holds only the workflow that produces the manuscript and its dat
 
 One gradient-boosting model (scikit-learn `HistGradientBoostingRegressor`) predicts daily salinity directly.
 
-- **Training data:** 84 DBHydro gauges (41 continuous sondes, 43 grab-sample stations) plus 13 freshwater sites with DBHydro field specific conductance converted to practical salinity (TEOS-10). In total, 355 156 station-days, April 2000 – December 2025, with equal weights.
+- **Training data:** 84 DBHydro gauges (41 continuous sondes, 43 grab-sample stations) plus 13 freshwater sites with DBHydro field specific conductance converted to practical salinity (TEOS-10). In total, 355 156 station-days, April 2000 – December 2025, with equal weights (the sondes supply 97 % of them).
 - **56 predictors.** Static predictors (27) are on the 30 m grid: signed distance to the coast, vegetation composition within 250 m and 1 km, hydrologic connectivity, and least-cost distances and weights for the freshwater source basins. Daily drivers:
   - gridMET precipitation (30/90/180/365 days), 30-day shortwave radiation and 90-day temperature;
   - EDEN v3 water level at the cell (30 days) and within 5 km (30 and 90 days);
-  - water-control structure flows (SRS, Taylor Slough/C-111, basin-weighted source flow);
+  - water-control structure flows, 90-day means: Shark River Slough (S-12B–D + S-333 + S-333N − S-334; S-12A flows not available), Taylor Slough/C-111 (S-332B–D + S-199 + S-200), and a basin-weighted source flow;
   - 3- and 30-day salinity at six anchor stations (ENPWP, ENPSR, ENPWW, ENPGB, TAYLORS3, ENPWB);
   - NOAA monthly mean sea level (Key West, Vaca Key, Virginia Key; 1-, 3- and 12-month means);
   - day-of-year sine and cosine.
-- **Hyperparameters:** learning rate 0.05, at most 400 iterations, 31 leaves, at least 200 samples per leaf, L2 1.0, `random_state` 0; scikit-learn 1.8.
-- **Validation:** 10 spatial blocks (k-means on station coordinates), each predicted by a model trained without it. Held-out R² 0.85, RMSE 5.3 psu, bias −0.1 psu over 352 714 station-days; R² 0.82–0.86 in every period.
+- **Hyperparameters:** learning rate 0.05, at most 400 iterations, 31 leaves, at least 200 samples per leaf, L2 1.0, `random_state` 0; scikit-learn 1.8. With the default `early_stopping='auto'`, a random 10 % of station-days is held out to monitor early stopping and not used to fit the trees; training runs the full 400 iterations.
+- **Missing anchor inputs** (at least one on 1096 of 9406 map days, 773 before 2013) are left missing and handled by the model's native missing-value treatment.
+- **Validation:** 10 spatial blocks (k-means on station coordinates), each predicted by a model trained without it. Held-out R² 0.85, RMSE 5.3 psu, bias −0.1 psu over 352 714 station-days; R² 0.82–0.86 in every period. Within stations, median r 0.87 and KGE 0.71 (the pooled R² is raised by the fresh-to-marine gradient).
 - **Intervals:** split-conformal 90 % half-widths by predicted level (0–5, 5–15, 15–30, > 30 psu): 4.3, 10.3, 10.0, 5.9 psu. Coverage is 89.5 % when calibrated on nine blocks and tested on the tenth.
 - **Surface-water mask:** daily wet/dry codes from EDEN water levels and the EDEN elevation models with uncertainty bounds (Simons et al., 2024). Salinity is set to missing on dry (0) and never-wet (9) days. The mask agrees with EDEN gauge dry flags on 94.5 % of committed days.
 
@@ -76,7 +77,6 @@ export ENP_WORK=$PWD/work
 ```
 
 | `$ENP_WORK` subfolder | holds |
-
 |---|---|
 | `exp/` | conductivity tables, freshwater-site inputs and the training table (`fresh_sites.py`, `fresh_features.py`, `build_training_table.py`) |
 | `map/` | working folder for `fresh_features.py` |
@@ -110,10 +110,10 @@ The Python scripts in `python/` run from one working directory with three links:
 **4. Model** (`final_model/`; run in this order)
 1. `download_sea_level.py`: NOAA monthly mean sea level for Key West (8724580), Vaca Key (8723970) and Virginia Key (8723214) → `$ENP_DATA_ROOT/sea_level/`.
 2. `download_conductivity.py`: DBHydro field specific conductance (test 9), 2000–2025 → `$ENP_DATA_ROOT/dbhydro_conductivity/`.
-3. `fresh_sites.py`: surface samples without quality flags, converted to practical salinity at 25 °C (TEOS-10), averaged per station-day; selects the 13 freshwater sites (in the map domain, ≥ 24 sample days, > 0.3 km from a gauge).
+3. `fresh_sites.py`: test 9 from all DBHydro projects; surface-water samples of type SAMP or RS, without quality flags, ≥ 20 µS cm⁻¹ and depth ≤ 1 in the reported units; converted to practical salinity at 25 °C (TEOS-10), averaged per station-day; selects the 13 freshwater sites (in the map domain, ≥ 24 sample days, > 0.3 km from a gauge).
 4. `fresh_features.py`: model inputs at the 13 sites on their sample days, with the same code as the maps (`onestep_maps.py`).
 5. `build_training_table.py`: the 2000–2025 station table with sea level and the 10 spatial blocks (`harness.load()`), plus the freshwater sites assigned to the nearest block.
-6. `fit_final.py`: block CV, conformal half-widths (`q_levels.json`), the final fit on all 355 156 station-days, and the compiled model (`m3_final.so`). Writes to the current folder.
+6. `fit_final.py`: block CV, conformal half-widths (`q_levels.json`), the final fit on the 355 156 station-days (10 % held out for the early-stopping check), and the compiled model (`m3_final.so`). Writes to the current folder.
 - `model_config.py`: the 56 predictors and the hyperparameters, used by every script that fits or applies the model. `harness.py`: data loading, block CV and skill metrics.
 - `gauge_events.py`, `gauge_trend_long_fn.py`: trends and high-salinity events at the gauges for the checks in Sect. 4.4.
 - `onestep_maps.py` (inputs only, used by `fresh_features.py`) and `onestep_maps_final.py` (final model, used by the driver attribution) compute the model inputs at any 30 m cell and day. `fillers.py` is a copy of `python/fillers.py`.
@@ -133,7 +133,7 @@ The Python scripts in `python/` run from one working directory with three links:
 - `diagnostics_review.py`: checks quoted in Sects. 3.3–4.4 (sonde share, missing anchor days, skill vs distance to anchors, residual autocorrelation, bias by era).
 - `interval_crosscal.py`: cross-calibrated interval coverage (each block scored with half-widths from the other nine blocks; Sect. 4.2).
 - Figures: `fig01_study_area.py` (uses helpers in `python/make_figures.py`), `fig_workflow.py`, `fig_validation.py`, `fig_stations.py`, `fig_surface_water_mask.py`, `fig_spatial.py`, `fig_temporal.py`, `fig_trends.py`, `fig_events.py`, `fig_drivers.py`.
-- Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes).
+- Drivers (Sect. 5.6): `drivers_perm_importance.py`, `drivers_perm_combined.py` (grouped permutation importance with blocks held out), `drivers_group_response.py`, `drivers_partial_dependence.py`, `drivers_attrib_nodes.py` (variance attribution at 500 m nodes on the 15th of each month, May 2000 – December 2025, 308 days).
 
 ### Reproducibility check (22 October 2026)
 
@@ -144,6 +144,17 @@ From a fresh copy of this repository, with the server inputs:
 - `validation_final.py` reproduced the station, region and interval tables of the paper exactly; `interval_crosscal.py` reproduced the cross-calibrated coverage (89.5 %, fresh sites 97.8 %, 9 stations below 70 %).
 - `mask_static.py` reproduced the released minimum-elevation DEMs and int16 mask inputs cell for cell.
 - One month of daily 30 m maps (May 2015, 200 rows, 14 million cell-days) from `daily30_onestep_hpc.py` and `mask_daily30.py` matched the released files in 99.99 % of cell-days; the rest differ by a median 0.1 psu (at most 1.9 psu), from floating-point differences between the Bouchet and local environments.
+
+## Known limitations
+
+Quantified in the manuscript (Sects. 4.1–4.5, 5.4, 5.6); numbers from `paper/scripts/diagnostics_review.py` and `interval_crosscal.py`.
+- **Intervals hold on average, not everywhere.** Station coverage ranges from 65 % (5th percentile) to 99 %, and 9 of 84 stations are below 70 %. At the freshwater sites the lowest-bin half-width (4.3 psu) is wide relative to observed salinity (mean 0.23 psu), so coverage there (97.8 %) reflects a conservative interval.
+- **Errors are strongly autocorrelated** within stations (median lag-1 correlation 0.96 at sondes); the effective sample for validation is closer to ~100 stations than to 355 156 station-days.
+- **Anchor gauges.** Holding the six anchor stations at their mean removes a median 79 % of the predicted variance. Held-out skill depends only weakly on distance to the nearest anchor (median r 0.89 within 5 km, 0.84 beyond 15 km; KGE unrelated).
+- **Trends are likely conservative where salinity rose fastest.** Held-out bias moved from +0.02 psu (2000–2012) to −0.29 psu (2013–2025), concentrated at ENPLS, Highway Creek, ENPWE, ENPHC, ENPLB and ENPCA; the median station did not change.
+- **Known mean-level biases:** too fresh on the Big Cypress and Ten Thousand Islands coast (median bias −6.9 psu); slightly too salty at the freshest stations.
+- **Wet-day statistics.** Means, percentiles and events use days with surface water only, so seasonally dry cells are averaged mostly over the wet season.
+- **Driver analyses describe the model, not physical causes**: predictor groups (anchor salinity, water level, sea level) covary.
 
 ---
 
