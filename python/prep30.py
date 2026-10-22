@@ -9,7 +9,7 @@ from scipy.spatial import cKDTree
 from pyproj import Transformer
 t0=time.time()
 names=['SRS','TaylorSlough','C111','BigCypress']; SRC=['src_dist_SRS_km','src_dist_TaylorSlough_km','src_dist_C111_km','src_dist_BigCypressGulf_km']
-U='/mnt/user-data/uploads/ENP_Landsat_Salinity_Model/site_variables/'
+U='/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model/site_variables/'
 wfr=rasterio.open(U+'ENP_WaterFrequency_L30.tif'); wf=wfr.read(1); T=wfr.transform; H,W=wf.shape
 inside=(wf>-1).ravel(); idx=np.flatnonzero(inside); NP=len(idx); np.save('px30_index.npy',idx.astype(np.int64))
 print('30 m grid',H,W,'inside pixels',NP,flush=True)
@@ -34,7 +34,7 @@ for nm,cl,rad in [('p_Open water_1000m','Open water',1000),('p_Mangrove_1000m','
 unm=mapped<0.5; st['p_Open water_1000m'][unm]=1; st['p_Open water_250m'][unm]=1
 np.save('vegclass30.npy',V.ravel()[idx].astype('int16')); del V,Vc
 print('veg fractions',round(time.time()-t0),flush=True)
-EM=np.load('/mnt/user-data/uploads/Downloads/eden_monthly_mean_grids_2013_2025.npz'); anyv=np.zeros((405,287),bool)
+EM=np.load('downloads/eden_monthly_mean_grids_2013_2025.npz'); anyv=np.zeros((405,287),bool)
 for k in EM.files[:24]: anyv|=np.isfinite(EM[k])
 vy,vx=np.nonzero(anyv); tree=cKDTree(np.column_stack([463400+vx*400,2790200+vy*400]))
 rr,cc=np.unravel_index(idx,(H,W)); lon,lat=rasterio.transform.xy(T,rr,cc); lon=np.asarray(lon,'float64'); lat=np.asarray(lat,'float64')
