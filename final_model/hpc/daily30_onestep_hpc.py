@@ -36,6 +36,10 @@ STK = json.load(open(f'{IN}/static30_keys.json')); STA = np.load(f'{IN}/static30
 IDX = np.load(f'{IN}/px30_index.npy'); LL = np.load(f'{IN}/lonlat30.npy', mmap_mode='r'); UT = np.load(f'{IN}/utm30.npy', mmap_mode='r'); NP = len(IDX)
 DRV = pd.read_csv(f'{IN}/daily_drivers_1998_2025.csv', parse_dates=['date']).set_index('date')
 DRV = DRV.join(pd.read_csv(f'{IN}/msl_by_date.csv', parse_dates=['date']).set_index('date'))   # sea level, NOAA monthly MSL anomaly (m)
+# msl_by_date.csv is built from the dates present in the station table; a map day it does not cover would reach the
+# model as NaN sea level and be routed silently. Fail loudly instead.
+_msl = DRV.reindex(days)[['msl_1m', 'msl_3m', 'msl_12m']]
+assert _msl.notna().all().all(), f'sea-level predictors missing for {int(_msl.isna().any(axis=1).sum())} day(s) in {M0:%Y-%m}: {list(_msl.index[_msl.isna().any(axis=1)][:5].date)}'
 DCOLS = ['SRS90', 'TSC11190'] + [c for c in DRV.columns if c.startswith('anc_')] + ['msl_1m', 'msl_3m', 'msl_12m']
 CLIM = ['P30', 'P90', 'P180', 'P365', 'R30', 'T90']
 G = np.load(f'{IN}/gridmet_filled_1998_2013.npz' if M0 < pd.Timestamp('2013-01-01') else f'{IN}/gridmet_filled.npz')
