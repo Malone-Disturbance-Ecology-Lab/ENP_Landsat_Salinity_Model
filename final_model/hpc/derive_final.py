@@ -32,7 +32,7 @@ with rasterio.open(f'{O}/daily250/{M0.year}/ENP_salinity_onestep_daily_{tag}.tif
 p = D2.astype('float32') / 10; p[D2 < 0] = np.nan; hw = q[np.clip(np.digitize(np.nan_to_num(p), bins[1:-1]), 0, 3)]
 with np.errstate(all='ignore'):
     np.savez(f'{O}/parts250/{tag}.npz', mean=np.nanmean(p, 0), lower90=np.nanmean(np.clip(p - hw, 0, None), 0), upper90=np.nanmean(p + hw, 0))
-# wet-day monthly means before 2013 (from 2013 the primary HLS product is used, unchanged)
+# wet-day monthly means before 2013 here; 2013-2025 are rebuilt from the final daily maps by wetdays_final.py (the earlier HLS-based files are superseded)
 if M0 < pd.Timestamp('2013-01-01'):
     os.makedirs(f'{R}/monthly30m_wetdays_onestep_final', exist_ok=True)
     with rasterio.open(f'{R}/wetdry30m/{M0.year}/ENP_wetdry30m_daily_{tag}.tif') as c: C = c.read()

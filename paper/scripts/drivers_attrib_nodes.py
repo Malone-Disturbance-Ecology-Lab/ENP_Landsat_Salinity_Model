@@ -1,6 +1,6 @@
 """Spatial attribution of day-to-day salinity variation to driver groups (final model), at the 250 m nodes.
-Days: the 15th of every month, 2000-04..2025-12 (309 days). For each group G the group's predictors are replaced at each node by
-that node's mean over the 309 days, and the drop in the node's temporal variance of predicted salinity is G's contribution."""
+Days: the 15th of every month, May 2000..Dec 2025 (308 days; see the date_range note below). For each group G the group's predictors are replaced at each node by
+that node's mean over the 308 days, and the drop in the node's temporal variance of predicted salinity is G's contribution."""
 import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import os, sys, pickle, time, numpy as np, pandas as pd
 os.environ['MODEL_PKL'] = os.path.abspath(f'{WORK}/final/final_model_onestep.pkl'); os.environ['MODEL_SO'] = os.path.abspath(f'{WORK}/final/m3_final.so')
