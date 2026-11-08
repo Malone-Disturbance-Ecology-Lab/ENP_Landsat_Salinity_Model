@@ -1,4 +1,4 @@
-"""30 m ecosystem/region classes (from from monthly 30 m maps: region x ecosystem means, seasonal cycle, annual/seasonal series,
+"""30 m ecosystem/region classes (from monthly 30 m maps: region x ecosystem means, seasonal cycle, annual/seasonal series,
 Theil-Sen + Mann-Kendall trends per pixel with BH-FDR, 2020-25 vs 2013-18 change."""
 import numpy as np, pandas as pd, rasterio, json, time
 from scipy.stats import norm

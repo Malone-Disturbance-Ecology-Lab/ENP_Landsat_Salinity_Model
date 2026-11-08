@@ -159,10 +159,10 @@ def run():
 def export():
     """GeoTIFFs: daily 250 m (one file per month, one band per day), monthly 250 m mean / lower90 / upper90, monthly 30 m mean."""
     D250 = np.load(f'{WK}/daily250_int16.npy', mmap_mode='r'); C30 = np.load(f'{WK}/C30_int16.npy', mmap_mode='r')
-    Q = json.load(open(os.environ.get('QLEV', f'{IN}/q_levels_v3.json'))); bins = np.array(Q['bins']); q = np.array(Q['q'])
+    Q = json.load(open(os.environ.get('QLEV', f'{IN}/q_levels.json'))); bins = np.array(Q['bins']); q = np.array(Q['q'])
     T250 = Affine(D30 * 8, 0, LEFT, 0, -D30 * 8, TOP); T30 = Affine(D30, 0, LEFT, 0, -D30, TOP)
     base = dict(driver='GTiff', crs='EPSG:4326', compress='deflate', predictor=2, tiled=True, blockxsize=256, blockysize=256)
-    model = 'one-step model v3 (no vegetation spectra; sea level; trained 2000-2025 with 13 fresh sites at 5x weight)'
+    model = 'final one-step model (no vegetation spectra; sea level; trained 2000-2025 on all non-anchor stations + 13 fresh DBHydro conductivity sites, equal weights)'
     inside = np.zeros(H * W, bool); inside[IDX] = True; inside = inside.reshape(H, W)
     midn = MID.values.astype('datetime64[D]').astype(float); dn = DAYS.values.astype('datetime64[D]').astype(float)
     J = np.clip(np.searchsorted(midn, dn) - 1, 0, NM - 2); Fw = np.clip((dn - midn[J]) / (midn[J + 1] - midn[J]), 0, 1)

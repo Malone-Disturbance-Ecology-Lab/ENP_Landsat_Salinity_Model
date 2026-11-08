@@ -1,4 +1,4 @@
-"""ESSD Fig. 8: the daily surface-water mask. (a,b) codes on 15 May and 15 Oct 2015; (c) share of April days with surface water;
+"""ESSD Fig. 5: the daily surface-water mask. (a,b) codes on 15 May and 15 Oct 2015; (c) share of April days with surface water;
 (d) mask vs EDEN gauge dry flags."""
 import os as _os; ROOT = _os.environ.get('ENP_DATA_ROOT', '/Volumes/MaloneLab/Research/ENP_Landsat_Salinity_Model'); WORK = _os.environ.get('ENP_WORK', 'work')   # data root and local work folder (README)
 import numpy as np, pandas as pd, rasterio, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
@@ -33,4 +33,4 @@ for i,(lb,colname) in enumerate(rows):
 ax.set_yticks([0,1]); ax.set_yticklabels([r[0] for r in rows]); ax.set_xlim(0,100); ax.set_xlabel('share of gauge-days called dry / uncertain / wet (%)')
 for s in ('top','right','left'): ax.spines[s].set_visible(False)
 ax.tick_params(axis='y',length=0); ax.set_title('d  Mask vs EDEN gauge dry flags (42 gauges, 2013–2025)')
-fig.savefig('Fig8_surface_water_mask.png',dpi=300,bbox_inches='tight',facecolor='white'); fig.savefig('Fig8_surface_water_mask.pdf',bbox_inches='tight',facecolor='white'); print('ok')
+fig.savefig('Fig05_surface_water_mask.png',dpi=300,bbox_inches='tight',facecolor='white'); fig.savefig('Fig05_surface_water_mask.pdf',bbox_inches='tight',facecolor='white'); print('ok')
